@@ -5,13 +5,13 @@ import (
 )
 
 var (
-	wolfiBase          = F.Curry2(unCurriedwolfiBase)
+	base               = F.Curry2(unCurriedBase)
 	wolfiWithGoInstall = F.Curry2(unCurriedwolfiWithGoInstall)
 	prepareWorkspace   = F.Bind12of3(uncurriedPrepareWorkspace)
 	goTestRunner       = F.Curry2(uncurriedGoTestRunner)
 )
 
-func unCurriedwolfiBase(base string, ctr *Container) *Container {
+func unCurriedBase(base string, ctr *Container) *Container {
 	return ctr.From(base)
 
 }
