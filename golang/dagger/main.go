@@ -10,6 +10,7 @@ import (
 const (
 	PROJ_MOUNT = "/app"
 	WOLFI_BASE = "cgr.dev/chainguard/wolfi-base"
+	LINT_BASE  = "golangci/golangci-lint"
 )
 
 type Golang struct{}
@@ -27,7 +28,6 @@ func (gom *Golang) Test(
 	// +optional
 	args []string,
 ) (string, error) {
-	return F.Pipe4(
 	return F.Pipe5(
 		dag.Container(),
 		base(WOLFI_BASE),
@@ -36,6 +36,26 @@ func (gom *Golang) Test(
 		modCache,
 		goTestRunner(args),
 	).Stdout(ctx)
-
 }
 
+// Lint runs golangci-lint on the Go source code
+func (gom *Golang) Lint(
+	ctx context.Context,
+    // An optional string specifying the version of golangci-lint to use
+	// +optional
+	// +default="v1.55.2-alpine"
+	version string,
+	// The source directory to test, Required.
+	src *Directory,
+	// An optional slice of strings representing additional arguments to the
+	// golangci-lint command
+	// +optional
+	args []string,
+) (string, error) {
+	return F.Pipe3(
+		dag.Container(),
+		base(LINT_BASE),
+		prepareWorkspace(src, PROJ_MOUNT),
+		goLintRunner(args),
+	).Stdout(ctx)
+}
