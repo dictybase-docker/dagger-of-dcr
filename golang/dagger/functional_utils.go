@@ -9,6 +9,7 @@ var (
 	wolfiWithGoInstall = F.Curry2(unCurriedwolfiWithGoInstall)
 	prepareWorkspace   = F.Bind12of3(uncurriedPrepareWorkspace)
 	goTestRunner       = F.Curry2(uncurriedGoTestRunner)
+	goLintRunner       = F.Curry2(uncurriedGoLintRunner)
 )
 
 func unCurriedBase(base string, ctr *Container) *Container {
@@ -23,6 +24,12 @@ func unCurriedwolfiWithGoInstall(version string, ctr *Container) *Container {
 
 func uncurriedGoTestRunner(cmd []string, ctr *Container) *Container {
 	return ctr.WithExec(append([]string{"go", "test", "./..."}, cmd...))
+}
+
+func uncurriedGoLintRunner(cmd []string, ctr *Container) *Container {
+	return ctr.WithExec(
+		append([]string{"golangci-lint", "run", "-c", ".golangci.yml"}, cmd...),
+	)
 }
 
 func modCache(ctr *Container) *Container {
