@@ -28,11 +28,14 @@ func (gom *Golang) Test(
 	args []string,
 ) (string, error) {
 	return F.Pipe4(
+	return F.Pipe5(
 		dag.Container(),
-		wolfiBase(WOLFI_BASE),
+		base(WOLFI_BASE),
 		wolfiWithGoInstall(version),
 		prepareWorkspace(src, PROJ_MOUNT),
+		modCache,
 		goTestRunner(args),
 	).Stdout(ctx)
 
 }
+
