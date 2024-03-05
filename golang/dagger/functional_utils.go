@@ -25,12 +25,16 @@ func uncurriedGoTestRunner(cmd []string, ctr *Container) *Container {
 	return ctr.WithExec(append([]string{"go", "test", "./..."}, cmd...))
 }
 
+func modCache(ctr *Container) *Container {
+	return ctr.WithExec([]string{"go", "mod", "download"})
+
+}
+
 func uncurriedPrepareWorkspace(
 	src *Directory,
 	mount string,
 	ctr *Container,
 ) *Container {
 	return ctr.WithMountedDirectory(mount, src).
-		WithWorkdir(mount).
-		WithExec([]string{"go", "mod", "download"})
+		WithWorkdir(mount)
 }
