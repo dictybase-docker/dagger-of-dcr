@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	F "github.com/IBM/fp-go/function"
 )
@@ -41,7 +43,7 @@ func (gom *Golang) Test(
 // Lint runs golangci-lint on the Go source code
 func (gom *Golang) Lint(
 	ctx context.Context,
-    // An optional string specifying the version of golangci-lint to use
+	// An optional string specifying the version of golangci-lint to use
 	// +optional
 	// +default="v1.55.2-alpine"
 	version string,
@@ -58,6 +60,42 @@ func (gom *Golang) Lint(
 		prepareWorkspace(src, PROJ_MOUNT),
 		goLintRunner(args),
 	).Stdout(ctx)
+}
+
+// Publish builds and pushes a Docker image to a Docker registry.
+func (gom *Golang) Publish(
+	ctx context.Context,
+	// specifies the source directory where the Docker context is located
+	// +optional
+	// +default="."
+	src string,
+    // the docker namespace under which the image will be pushed
+	// +optional
+	// +default="dictybase"
+	namespace string,
+    // specifies the path to the Dockerfile
+	// +optional
+	// +default="build/package/Dockerfile"
+	dockerFile string,
+    // name of the image to be built, Required
+	image string,
+    // tag of the image to be built, Required
+	imageTag string,
+) (string, error) {
+	var empty string
+	userValue, err := fetchAndValidateEnvVars("DOCKERHUB_USER")
+	if err != nil {
+		return empty, err
+	}
+	passValue, err := fetchAndValidateEnvVars("DOCKER_PASS")
+	if err != nil {
+		return empty, nil
+	}
+	return F.Pipe2(
+		dag.Container(),
+		setupBuild(src, dockerFile),
+		dockerHubAuth(userValue, dag.SetSecret("docker-pass", passValue)),
+	).Publish(ctx, fmt.Sprintf("%s/%s:%s", namespace, image, imageTag))
 }
 
 func fetchAndValidateEnvVars(envVar string) (string, error) {
