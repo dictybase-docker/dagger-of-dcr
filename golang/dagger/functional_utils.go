@@ -62,3 +62,4 @@ func uncurriedSetupBuild(src, dockerFile string, ctr *Container) *Container {
 	return ctr.Directory(src).
 		DockerBuild(DirectoryDockerBuildOpts{Dockerfile: dockerFile})
 }
+

@@ -59,3 +59,11 @@ func (gom *Golang) Lint(
 		goLintRunner(args),
 	).Stdout(ctx)
 }
+
+func fetchAndValidateEnvVars(envVar string) (string, error) {
+	value := os.Getenv(envVar)
+	if len(value) == 0 {
+		return "", fmt.Errorf("value of %s env variable is not set", envVar)
+	}
+	return value, nil
+}
