@@ -10,6 +10,9 @@ var (
 	prepareWorkspace   = F.Bind12of3(uncurriedPrepareWorkspace)
 	goTestRunner       = F.Curry2(uncurriedGoTestRunner)
 	goLintRunner       = F.Curry2(uncurriedGoLintRunner)
+	dockerHubAuth       = F.Bind12of3(
+		F.Bind1of4(uncurriedRegistryAuth)("docker.io"),
+	)
 )
 
 func unCurriedBase(base string, ctr *Container) *Container {
@@ -44,4 +47,12 @@ func uncurriedPrepareWorkspace(
 ) *Container {
 	return ctr.WithMountedDirectory(mount, src).
 		WithWorkdir(mount)
+}
+
+func uncurriedRegistryAuth(
+	address, user string,
+	pass *Secret,
+	ctr *Container,
+) *Container {
+	return ctr.WithRegistryAuth(address, user, pass)
 }
