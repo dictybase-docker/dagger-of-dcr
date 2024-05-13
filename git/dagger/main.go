@@ -71,24 +71,31 @@ func (gcmd *GitCmd) WithRepository(
 
 // Checkout clones a repository at the specified path and reference, falling
 // back to the default branch if the reference is not found.
-func (gcmd *GitCmd) Checkout(
-	ctx context.Context,
-) (*GitCmd, error) {
-	repo, err := git.PlainClone(
-		gcmd.Path,
-		false,
-		&git.CloneOptions{
-			URL:           gcmd.Repository,
-			ReferenceName: plumbing.ReferenceName(gcmd.Ref),
-		})
+func (gcmd *GitCmd) Checkout(ctx context.Context) (*GitCmd, error) {
+	repo, err := gcmd.cloneRepo()
+	if err != nil {
+		return nil, err
+	}
+	gcmd.GitRef = repo
+	return gcmd, nil
+}
+
+func (gcmd *GitCmd) cloneRepo() (*git.Repository, error) {
+	repo, err := git.PlainClone(gcmd.Path, false, &git.CloneOptions{
+		URL:           gcmd.Repository,
+		ReferenceName: plumbing.ReferenceName(gcmd.Ref),
+	})
 	if err == nil {
-		gcmd.GitRef = repo
-		return gcmd, nil
+		return repo, nil
 	}
 	if !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return nil, fmt.Errorf("error in checking out repo %q", err)
 	}
-	hrepo, err := git.PlainClone(
+	return gcmd.cloneDefaultBranch()
+}
+
+func (gcmd *GitCmd) cloneDefaultBranch() (*git.Repository, error) {
+	repo, err := git.PlainClone(
 		gcmd.Path,
 		false,
 		&git.CloneOptions{URL: gcmd.Repository},
@@ -96,19 +103,20 @@ func (gcmd *GitCmd) Checkout(
 	if err != nil {
 		return nil, fmt.Errorf("error in checking out default branch %q", err)
 	}
-	wtree, err := hrepo.Worktree()
+	return gcmd.checkoutRef(repo)
+}
+
+func (gcmd *GitCmd) checkoutRef(repo *git.Repository) (*git.Repository, error) {
+	wtree, err := repo.Worktree()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error in getting worktree from default branch %q",
 			err,
 		)
 	}
-	err = wtree.Checkout(
-		&git.CheckoutOptions{Hash: plumbing.NewHash(gcmd.Ref)},
-	)
+	err = wtree.Checkout(&git.CheckoutOptions{Hash: plumbing.NewHash(gcmd.Ref)})
 	if err != nil {
 		return nil, fmt.Errorf("error in checking out ref %s %q", gcmd.Ref, err)
 	}
-	gcmd.GitRef = repo
-	return gcmd, nil
+	return repo, nil
 }
