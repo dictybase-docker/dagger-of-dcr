@@ -8,9 +8,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
-// GitReference open a git repository located at the specified path,
+// gitReference open a git repository located at the specified path,
 // returning the current HEAD reference.
-func GitReference(path string) (*plumbing.Reference, error) {
+func gitReference(path string) (*plumbing.Reference, error) {
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		if errors.Is(err, git.ErrRepositoryNotExists) {
