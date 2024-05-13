@@ -1,5 +1,5 @@
 {
-  "name": "git",
+  "name": "gitter",
   "sdk": "go",
   "source": "dagger",
   "engineVersion": "v0.11.4"
