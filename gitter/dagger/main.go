@@ -16,9 +16,9 @@ type Gitter struct {
 	// Repository name
 	Repository string
 	// Git reference
-	Ref        string
+	Ref string
 	// Repository path
-	Path       string
+	Path string
 }
 
 // WithPath sets the path where the repository should be placed.
@@ -67,12 +67,12 @@ func (gcmd *Gitter) WithRepository(
 }
 
 // Checkout clones a repository at the specified path and reference
-func (gcmd *Gitter) Checkout(ctx context.Context) (*Gitter, error) {
+func (gcmd *Gitter) Checkout(ctx context.Context) (*Directory, error) {
 	_, err := cloneRepo(gcmd.Path, gcmd.Ref, gcmd.Repository)
 	if err != nil {
 		return nil, err
 	}
-	return gcmd, nil
+	return dag.Directory().Directory(gcmd.Path), nil
 }
 
 func cloneRepo(path, ref, repository string) (*git.Repository, error) {
