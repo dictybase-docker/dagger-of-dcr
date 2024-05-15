@@ -69,17 +69,17 @@ func (gom *Golang) Publish(
 	// +optional
 	// +default="."
 	src string,
-    // the docker namespace under which the image will be pushed
+	// the docker namespace under which the image will be pushed
 	// +optional
 	// +default="dictybase"
 	namespace string,
-    // specifies the path to the Dockerfile
+	// specifies the path to the Dockerfile
 	// +optional
 	// +default="build/package/Dockerfile"
 	dockerFile string,
-    // name of the image to be built, Required
+	// name of the image to be built, Required
 	image string,
-    // tag of the image to be built, Required
+	// tag of the image to be built, Required
 	imageTag string,
 ) (string, error) {
 	var empty string
