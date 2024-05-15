@@ -89,16 +89,6 @@ func cloneRepo(path, ref, repository string) (*git.Repository, error) {
 	return cloneDefaultBranch(path, repository, ref)
 }
 
-func cloneDefaultBranch(path, repository, ref string) (*git.Repository, error) {
-	repo, err := git.PlainClone(
-		path,
-		false,
-		&git.CloneOptions{URL: repository},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error in checking out default branch %q", err)
-	}
-	return checkoutRef(repo, repository, ref)
 // Inspect clones the given repository and returns a Terminal instance for inspection
 func (gcmd *Gitter) Inspect(ctx context.Context) *Terminal {
 	return dag.Git().
@@ -107,20 +97,6 @@ func (gcmd *Gitter) Inspect(ctx context.Context) *Terminal {
 		Inspect()
 }
 
-func checkoutRef(
-	repo *git.Repository,
-	repository, ref string,
-) (*git.Repository, error) {
-	wtree, err := repo.Worktree()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error in getting worktree from default branch %q",
-			err,
-		)
-	}
-	err = wtree.Checkout(&git.CheckoutOptions{Hash: plumbing.NewHash(ref)})
-	if err != nil {
-		return nil, fmt.Errorf("error in checking out ref %s %q", ref, err)
 func parseBranchName(ref string) string {
 	prefix := "refs/heads/"
 	if !strings.HasPrefix(ref, prefix) {
