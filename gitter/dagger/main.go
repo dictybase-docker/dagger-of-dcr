@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"regexp"
-	"strings"
 )
 
 var bre = regexp.MustCompile(`refs/heads/(.+)`)
@@ -67,13 +66,4 @@ func (gcmd *Gitter) ParseRef(ctx context.Context) string {
 		return match[1]
 	}
 	return gcmd.Ref
-}
-
-func parseBranchName(ref string) string {
-	prefix := "refs/heads/"
-	if !strings.HasPrefix(ref, prefix) {
-		return ref
-	}
-	parts := strings.SplitN(ref, "refs/heads/", 2)
-	return parts[1]
 }
