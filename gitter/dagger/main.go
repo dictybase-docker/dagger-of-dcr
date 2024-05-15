@@ -48,7 +48,7 @@ func (gcmd *Gitter) WithRepository(
 func (gcmd *Gitter) Checkout(ctx context.Context) *Directory {
 	return dag.Git().
 		Clone(gcmd.Repository).
-		Checkout(parseBranchName(gcmd.Ref)).
+		Checkout(gcmd.ParseRef(ctx)).
 		Directory()
 }
 
@@ -56,8 +56,17 @@ func (gcmd *Gitter) Checkout(ctx context.Context) *Directory {
 func (gcmd *Gitter) Inspect(ctx context.Context) *Terminal {
 	return dag.Git().
 		Clone(gcmd.Repository).
-		Checkout(parseBranchName(gcmd.Ref)).
+		Checkout(gcmd.ParseRef(ctx)).
 		Inspect()
+}
+
+// ParseRef extracts the branch name from a Git reference string or returns the original reference if no match is found.
+func (gcmd *Gitter) ParseRef(ctx context.Context) string {
+	match := bre.FindStringSubmatch(gcmd.Ref)
+	if len(match) > 1 {
+		return match[1]
+	}
+	return gcmd.Ref
 }
 
 func parseBranchName(ref string) string {
