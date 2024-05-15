@@ -99,6 +99,12 @@ func cloneDefaultBranch(path, repository, ref string) (*git.Repository, error) {
 		return nil, fmt.Errorf("error in checking out default branch %q", err)
 	}
 	return checkoutRef(repo, repository, ref)
+// Inspect clones the given repository and returns a Terminal instance for inspection
+func (gcmd *Gitter) Inspect(ctx context.Context) *Terminal {
+	return dag.Git().
+		Clone(gcmd.Repository).
+		Checkout(parseBranchName(gcmd.Ref)).
+		Inspect()
 }
 
 func checkoutRef(
