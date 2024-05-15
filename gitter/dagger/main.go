@@ -41,7 +41,7 @@ func (gcmd *Gitter) WithRepository(
 	return gcmd, nil
 }
 
-// Checkout clones the repository, checks out a specified branch, and returns the directory.
+// Checkout clones the repository and checks out the specific ref
 func (gcmd *Gitter) Checkout(ctx context.Context) *Directory {
 	return dag.Git().
 		Clone(gcmd.Repository).
