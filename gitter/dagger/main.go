@@ -1,5 +1,5 @@
-// A generated module for Gitter functions
-
+// Package main provides a Gitter struct to manipulate git repositories,
+// including setting repository details and performing actions like checkout and inspect.
 package main
 
 import (
