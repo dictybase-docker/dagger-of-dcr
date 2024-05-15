@@ -5,8 +5,11 @@ package main
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 )
+
+var bre = regexp.MustCompile(`refs/heads/(.+)`)
 
 type Gitter struct {
 	// Repository name
