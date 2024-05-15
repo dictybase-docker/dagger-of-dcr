@@ -115,6 +115,11 @@ func checkoutRef(
 	err = wtree.Checkout(&git.CheckoutOptions{Hash: plumbing.NewHash(ref)})
 	if err != nil {
 		return nil, fmt.Errorf("error in checking out ref %s %q", ref, err)
+func parseBranchName(ref string) string {
+	prefix := "refs/heads/"
+	if !strings.HasPrefix(ref, prefix) {
+		return ref
 	}
-	return repo, nil
+	parts := strings.SplitN(ref, "refs/heads/", 2)
+	return parts[1]
 }
