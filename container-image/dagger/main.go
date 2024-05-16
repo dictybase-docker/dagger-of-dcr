@@ -78,10 +78,28 @@ func (cmg *ContainerImage) WithImage(
 	return cmg
 }
 
-// ImageTag generates a Docker image tag based on the provided Git reference, which can be a semantic version, SHA, or other reference
+func (cmg *ContainerImage) FakePublishFromRepo(
+	ctx context.Context,
+) (string, error) {
+	cont, err := cmg.ImageTag(ctx)
+	if err != nil {
+		return "", err
+	}
+	return cont.Publish(
+		ctx,
+		fmt.Sprintf(
+			"ttl.sh/%s-%s-%s:10m",
+			cmg.Namespace,
+			cmg.Image,
+			cmg.DockerImageTag,
+		),
+	)
+}
+
+// ImageTag generates a Docker image tag based on the provided Git reference
 func (cmg *ContainerImage) ImageTag(
 	ctx context.Context,
-) (*ContainerImage, error) {
+) (*Container, error) {
 	source := dag.Gitter().
 		WithRef(cmg.Ref).
 		WithRepository(cmg.Repository).
@@ -100,7 +118,8 @@ func (cmg *ContainerImage) ImageTag(
 		genTag = dtag
 	}
 	cmg.DockerImageTag = genTag
-	return cmg, nil
+	return dag.Container().
+		Build(source, ContainerBuildOpts{Dockerfile: cmg.Dockerfile}), nil
 }
 
 func (cmg *ContainerImage) generateDefaultTag(
@@ -122,35 +141,6 @@ func (cmg *ContainerImage) generateDefaultTag(
 		parsedRef,
 		formatSha(commitHash),
 	), nil
-}
-
-func (cmg *ContainerImage) FakePublishFromRepo(
-	ctx context.Context,
-) *Container {
-	return new(Container)
-	/* var genTag string
-	switch {
-	case semverRe.MatchString(ref):
-		genTag = ref
-	case shaRe.MatchString(ref):
-		genTag = fmt.Sprintf("sha-%s", formatSha(ref))
-	default:
-		commitHash, err := dag.Git().
-			Load(source).
-			Command([]string{"rev-parse", "HEAD"}).Stdout(ctx)
-		if err != nil {
-			return nil, err
-		}
-		parsedRef, err := dag.Gitter().WithRef(ref).ParseRef(ctx)
-		if err != nil {
-			return nil, err
-		}
-		genTag = fmt.Sprintf(
-			"%s-%s",
-			parsedRef,
-			formatSha(commitHash),
-		)
-	} */
 }
 
 func formatSha(sha string) string {
