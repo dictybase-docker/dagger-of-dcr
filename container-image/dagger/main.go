@@ -1,17 +1,7 @@
-// A generated module for ContainerImage functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
-
+/*
+Package main provides functionality to manage and build Docker container images based on Git references.
+It includes methods to set various properties of the container image and generate appropriate Docker image tags.
+*/
 package main
 
 import (
@@ -88,6 +78,7 @@ func (cmg *ContainerImage) WithImage(
 	return cmg
 }
 
+// ImageTag generates a Docker image tag based on the provided Git reference, which can be a semantic version, SHA, or other reference
 func (cmg *ContainerImage) ImageTag(
 	ctx context.Context,
 ) (*ContainerImage, error) {
@@ -102,24 +93,35 @@ func (cmg *ContainerImage) ImageTag(
 	case shaRe.MatchString(cmg.Ref):
 		genTag = fmt.Sprintf("sha-%s", formatSha(cmg.Ref))
 	default:
-		commitHash, err := dag.Git().
-			Load(source).
-			Command([]string{"rev-parse", "HEAD"}).Stdout(ctx)
+		dtag, err := cmg.generateDefaultTag(ctx, source)
 		if err != nil {
 			return nil, err
 		}
-		parsedRef, err := dag.Gitter().WithRef(cmg.Ref).ParseRef(ctx)
-		if err != nil {
-			return nil, err
-		}
-		genTag = fmt.Sprintf(
-			"%s-%s",
-			parsedRef,
-			formatSha(commitHash),
-		)
+		genTag = dtag
 	}
 	cmg.DockerImageTag = genTag
 	return cmg, nil
+}
+
+func (cmg *ContainerImage) generateDefaultTag(
+	ctx context.Context,
+	source *Directory,
+) (string, error) {
+	commitHash, err := dag.Git().
+		Load(source).
+		Command([]string{"rev-parse", "HEAD"}).Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+	parsedRef, err := dag.Gitter().WithRef(cmg.Ref).ParseRef(ctx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s-%s",
+		parsedRef,
+		formatSha(commitHash),
+	), nil
 }
 
 func (cmg *ContainerImage) FakePublishFromRepo(
