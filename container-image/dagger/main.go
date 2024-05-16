@@ -78,6 +78,7 @@ func (cmg *ContainerImage) WithImage(
 	return cmg
 }
 
+// PublishFromRepo publishes a container image to Docker Hub
 func (cmg *ContainerImage) PublishFromRepo(
 	ctx context.Context,
 	// dockerhub user name
