@@ -51,6 +51,14 @@ func (gcmd *Gitter) Checkout(ctx context.Context) *Directory {
 		Directory()
 }
 
+// CommitHash retrieves the short commit hash of the HEAD from the specified Git repository.
+func (gcmd *Gitter) CommitHash(ctx context.Context) (string, error) {
+	return dag.Git().
+		Clone(gcmd.Repository).
+		Checkout(gcmd.ParseRef(ctx)).
+		Command([]string{"rev-parse", "--short", "HEAD"}).Stdout(ctx)
+}
+
 // Inspect clones the given repository and returns a Terminal instance for inspection
 func (gcmd *Gitter) Inspect(ctx context.Context) *Terminal {
 	return dag.Git().
