@@ -78,6 +78,33 @@ func (cmg *ContainerImage) WithImage(
 	return cmg
 }
 
+func (cmg *ContainerImage) PublishFromRepo(
+	ctx context.Context,
+	// dockerhub user name
+	user string,
+	// dockerhub password, use an api token
+	password string,
+) (string, error) {
+	cont, err := cmg.ImageTag(ctx)
+	if err != nil {
+		return "", err
+	}
+	return cont.WithRegistryAuth(
+		"docker.io",
+		user,
+		dag.SetSecret("docker-pass", password),
+	).Publish(
+		ctx,
+		fmt.Sprintf(
+			"%s/%s:%s",
+			cmg.Namespace,
+			cmg.Image,
+			cmg.DockerImageTag,
+		),
+	)
+}
+
+// FakePublishFromRepo publishes a container image to a temporary repository with a time-to-live of 10 minutes.
 func (cmg *ContainerImage) FakePublishFromRepo(
 	ctx context.Context,
 ) (string, error) {
