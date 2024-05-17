@@ -37,9 +37,23 @@ The project is divided into several modules, each with its own specific function
 - **Test**: Runs Go language tests within a containerized environment.
 - **Lint**: Runs golangci-lint on the Go source code.
 - **Publish**: Builds and pushes a Docker image to a Docker registry.
-
 ## Usage
 
 To use the functions provided by this project, create instances of the respective structs (`Gitter`, `ContainerImage`, `Golang`) and call the desired methods. For example, to checkout a Git repository:
 
+```
+
+## Running Dagger Functions
+
+To run the Dagger functions using the Dagger command line, follow these steps:
+
+1. **Install Dagger CLI**: Ensure you have the Dagger command line interface installed. You can download it from the official Dagger website.
+2. **Initialize Dagger**: Run `dagger init` in your project directory to initialize Dagger.
+3. **Run Functions**: Use the `dagger run` command followed by the function name to execute the desired function. For example:
+
+```
+dag run Gitter.Checkout
+```
+
+This will execute the `Checkout` function from the `Gitter` module.
 ```
