@@ -1,34 +1,45 @@
-# Dagger Golang Module
-This module provides a set of functions to run Go language tests within a containerized environment.
+# Dagger Golang Project
 
-## Install
-```
-dagger install github.com/dictybase-docker/dagger-of-dcr/golang@main
-```
-## Functions
+This project provides a set of tools and functions to manage Git repositories, run Go language tests, and build and publish Docker container images. It is designed to work within a containerized environment, leveraging the Dagger framework for seamless integration and execution.
 
-- `test`: This function runs golang tests. It takes in a context, an optional Go version, a source directory to test, and an optional slice of strings representing additional arguments to the go test command.
+## Overview
 
-- `lint`: This function runs golangci-lint on the Go source code. It takes in a context, an optional string specifying the version of golangci-lint to use, the source directory to test, and an optional slice of strings representing additional arguments to the golangci-lint command.
+The project is divided into several modules, each with its own specific functionality:
 
-- `publish`: This function builds and pushes a Docker image to a Docker registry. It takes in a context, an optional source directory where the Docker context is located, an optional docker namespace, an optional path to the Dockerfile, the name of the image to be built, and the tag of the image to be built.
+1. **Gitter Module**: Provides a `Gitter` struct to manipulate Git repositories, including setting repository details and performing actions like checkout and inspect.
+2. **Container Image Module**: Manages and builds Docker container images based on Git references. It includes methods to set various properties of the container image and generate appropriate Docker image tags.
+3. **Golang Module**: Provides functions to run Go language tests, lint Go source code, and publish Docker images.
+
+## Modules and Functions
+
+### Gitter Module
+
+- **WithRef**: Sets the Git reference (branch, tag, or SHA) for the `Gitter` instance.
+- **WithRepository**: Sets the GitHub repository name for the `Gitter` instance.
+- **Checkout**: Clones the repository and checks out the specified reference.
+- **CommitHash**: Retrieves the short commit hash of the HEAD from the specified Git repository.
+- **Inspect**: Clones the given repository and returns a Terminal instance for inspection.
+- **ParseRef**: Extracts the branch name from a Git reference string or returns the original reference if no match is found.
+
+### Container Image Module
+
+- **WithNamespace**: Sets the Docker namespace under which the image will be pushed.
+- **WithRef**: Sets the Git reference (branch, tag, or SHA) for the `ContainerImage` instance.
+- **WithRepository**: Sets the GitHub repository name for the `ContainerImage` instance.
+- **WithDockerfile**: Sets the Dockerfile path for the `ContainerImage` instance.
+- **WithImage**: Sets the image name for the `ContainerImage` instance.
+- **PublishFromRepo**: Publishes a container image to Docker Hub.
+- **FakePublishFromRepo**: Publishes a container image to a temporary repository with a time-to-live of 10 minutes.
+- **ImageTag**: Generates a Docker image tag based on the provided Git reference.
+
+### Golang Module
+
+- **Test**: Runs Go language tests within a containerized environment.
+- **Lint**: Runs golangci-lint on the Go source code.
+- **Publish**: Builds and pushes a Docker image to a Docker registry.
 
 ## Usage
-To get help about for any function, for example `test`.
+
+To use the functions provided by this project, create instances of the respective structs (`Gitter`, `ContainerImage`, `Golang`) and call the desired methods. For example, to checkout a Git repository:
 
 ```
-dagger -m "golang" call test --help
-```
-
-To run it 
-
-```
-dagger -m "golang" call test --src="."
-```
-
-Use other function arguments as necessary.
-
-The `lint` and `publish` methods can be used in a similar way.
-
-
-
