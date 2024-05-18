@@ -32,7 +32,6 @@ type ContainerImage struct {
 // WithNamespace sets the docker namespace
 func (cmg *ContainerImage) WithNamespace(
 	// The docker namespace under which the image will be pushed
-	// +optional
 	// +default="dictybase"
 	namespace string,
 ) *ContainerImage {
