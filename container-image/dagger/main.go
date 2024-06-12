@@ -31,6 +31,7 @@ type ContainerImage struct {
 
 // WithNamespace sets the docker namespace
 func (cmg *ContainerImage) WithNamespace(
+	ctx context.Context,
 	// The docker namespace under which the image will be pushed
 	// +default="dictybase"
 	namespace string,
@@ -41,6 +42,7 @@ func (cmg *ContainerImage) WithNamespace(
 
 // WithRef sets the Git reference (branch, tag, or SHA)
 func (cmg *ContainerImage) WithRef(
+	ctx context.Context,
 	// the branch, tag or sha to checkout
 	ref string,
 ) *ContainerImage {
@@ -50,6 +52,7 @@ func (cmg *ContainerImage) WithRef(
 
 // WithRepository sets the GitHub repository name
 func (cmg *ContainerImage) WithRepository(
+	ctx context.Context,
 	// github repository name with owner, for example tora/bora, Required
 	repository string,
 ) *ContainerImage {
@@ -59,6 +62,7 @@ func (cmg *ContainerImage) WithRepository(
 
 // WithDockerfile sets the Dockerfile path
 func (cmg *ContainerImage) WithDockerfile(
+	ctx context.Context,
 	// specifies the path to the Dockerfile
 	// +optional
 	// +default="build/package/Dockerfile"
@@ -70,6 +74,7 @@ func (cmg *ContainerImage) WithDockerfile(
 
 // WithImage sets the image name
 func (cmg *ContainerImage) WithImage(
+	ctx context.Context,
 	// name of the image to be built
 	image string,
 ) *ContainerImage {
