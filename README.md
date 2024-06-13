@@ -18,7 +18,7 @@ The project is divided into several modules, each with its own specific function
 ### Gitter Module
 
 - **WithRef**: Sets the Git reference (branch, tag, or SHA) for the `Gitter` instance.
-- **WithRepository**: Sets the GitHub repository name for the `Gitter` instance.
+- **WithRepository**: Sets the git repository name for the `Gitter` instance.
 - **Checkout**: Clones the repository and checks out the specified reference.
 
 ### Container Image Module
@@ -51,7 +51,7 @@ To run the Dagger functions using the Dagger command line, follow these steps:
    name to execute the desired function. For example:
 
 ```shell
-dagger call with-ref --ref=develop with-repository \
+dagger -m gitter call with-ref --ref=develop with-repository \
     --repository=https://github.com/dictybase-playground/gdrive-image-uploadr.git \
     checkout entries
 ```
