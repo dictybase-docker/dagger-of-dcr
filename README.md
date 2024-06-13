@@ -17,36 +17,18 @@ The project is divided into several modules, each with its own specific function
 ## Modules and Functions
 
 ### Gitter Module
-
-- **WithRef**: Sets the Git reference (branch, tag, or SHA) for the `Gitter` instance.
-- **WithRepository**: Sets the git repository name for the `Gitter` instance.
 - **Checkout**: Clones the repository and checks out the specified reference.
 
 ### Container Image Module
-
-- **WithNamespace**: Sets the Docker namespace under which the image will be pushed.
-- **WithRef**: Sets the Git reference (branch, tag, or SHA) for the `ContainerImage` instance.
-- **WithRepository**: Sets the GitHub repository name for the `ContainerImage` instance.
-- **WithDockerfile**: Sets the Dockerfile path for the `ContainerImage` instance.
-- **WithImage**: Sets the image name for the `ContainerImage` instance.
 - **PublishFromRepo**: Publishes a container image to Docker Hub.
 
 ### Golang Module
-
 - **Test**: Runs Go language tests within a containerized environment.
 - **Lint**: Runs golangci-lint on the Go source code.
 - **Publish**: Builds and pushes a Docker image to a Docker registry.
 
 ### Kops Module
-
-- **KopsContainer**: Sets up a container with specified versions of kubectl and kops binaries from given URLs.
 - **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
-- **WithName**: Sets the name of the kubectl output file.
-- **WithCredentials**: Sets the credentials file.
-- **WithStateStorage**: Sets the location of the state storage.
-- **WithCluster**: Sets the cluster name.
-- **WithKops**: Sets the Kops version.
-- **WithKubectl**: Sets the kubectl version.
 
 ## Usage
 
@@ -66,6 +48,5 @@ To run the Dagger functions using the Dagger command line, follow these steps:
 dagger -m gitter call with-ref --ref=develop with-repository \
     --repository=https://github.com/dictybase-playground/gdrive-image-uploadr.git \
     checkout entries
-```
 ```
 
