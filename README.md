@@ -12,6 +12,7 @@ The project is divided into several modules, each with its own specific function
 1. **Gitter Module**: Provides a `Gitter` struct to manipulate Git repositories, including setting repository details and performing actions like checkout and inspect.
 2. **Container Image Module**: Manages and builds Docker container images based on Git references. It includes methods to set various properties of the container image and generate appropriate Docker image tags.
 3. **Golang Module**: Provides functions to run Go language tests, lint Go source code, and publish Docker images.
+4. **Kops Module**: Provides functionality to set up and manage Kubernetes clusters using Kops and kubectl binaries.
 
 ## Modules and Functions
 
@@ -36,6 +37,17 @@ The project is divided into several modules, each with its own specific function
 - **Lint**: Runs golangci-lint on the Go source code.
 - **Publish**: Builds and pushes a Docker image to a Docker registry.
 
+### Kops Module
+
+- **KopsContainer**: Sets up a container with specified versions of kubectl and kops binaries from given URLs.
+- **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
+- **WithName**: Sets the name of the kubectl output file.
+- **WithCredentials**: Sets the credentials file.
+- **WithStateStorage**: Sets the location of the state storage.
+- **WithCluster**: Sets the cluster name.
+- **WithKops**: Sets the Kops version.
+- **WithKubectl**: Sets the kubectl version.
+
 ## Usage
 
 ## Running Dagger Functions
@@ -54,5 +66,6 @@ To run the Dagger functions using the Dagger command line, follow these steps:
 dagger -m gitter call with-ref --ref=develop with-repository \
     --repository=https://github.com/dictybase-playground/gdrive-image-uploadr.git \
     checkout entries
+```
 ```
 
