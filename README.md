@@ -39,8 +39,10 @@ The project is divided into several modules, each with its own specific function
 
 ### Kops Module
 
-- **KopsContainer**: Sets up a container with specified versions of kubectl and kops binaries from given URLs.
-- **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
+- **KopsContainer**: Sets up a container with specified versions of kubectl and
+  kops binaries from given URLs.
+- **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster
+  to a specified output path.
 - **WithName**: Sets the name of the kubectl output file.
 - **WithCredentials**: Sets the credentials file.
 - **WithStateStorage**: Sets the location of the state storage.
@@ -91,3 +93,15 @@ dagger -m container-image call with-namespace --namespace=my-namespace with-ref 
     with-image --image=my-image publish-from-repo --user=my-dockerhub-user --password=my-dockerhub-password
 ```
 
+#### Using Dagger CLI with Golang Module
+To run Go language tests within a containerized environment, you can use the following Dagger CLI command:
+
+```shell
+dagger -m golang call test --version=go-1.21 --src=/path/to/source --args="-v ./..."
+```
+
+To run golangci-lint on the Go source code, you can use the following Dagger CLI command:
+
+```shell
+dagger -m golang call lint --version=v1.55.2-alpine --src=/path/to/source --args="run ./..."
+```
