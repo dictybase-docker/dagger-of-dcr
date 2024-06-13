@@ -72,7 +72,6 @@ dagger -m gitter call with-ref --ref=develop with-repository \
     checkout entries
 ```
 
-
 #### Using Dagger CLI with kops Module
 To export the kubeconfig file for a specified kops cluster, you can use the
 following Dagger CLI command:
@@ -82,3 +81,13 @@ dagger -m kops call with-cluster --cluster=my-cluster with-state-storage \
     --storage=gs://my-state-store with-credentials --credentials=/path/to/credentials.json \
     with-name export-kubectl --output=./my-kubeconfig.yaml
 ```
+
+#### Using Dagger CLI with container image Module
+To publish a container image to Docker Hub, you can use the following Dagger CLI command:
+
+```shell
+dagger -m container-image call with-namespace --namespace=my-namespace with-ref --ref=main \
+    with-repository --repository=my-repo with-dockerfile --dockerfile=./Dockerfile \
+    with-image --image=my-image publish-from-repo --user=my-dockerhub-user --password=my-dockerhub-password
+```
+
