@@ -5,6 +5,21 @@ run Go language tests, and build and publish Docker container images. It is
 designed to work within a containerized environment, leveraging the Dagger
 framework for seamless integration and execution.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Modules and Functions](#modules-and-functions)
+  - [Gitter Module](#gitter-module)
+  - [Container Image Module](#container-image-module)
+  - [Golang Module](#golang-module)
+  - [Kops Module](#kops-module)
+- [Usage](#usage)
+- [Running Dagger Functions](#running-dagger-functions)
+  - [Example: Using Dagger CLI with Gitter Module](#example-using-dagger-cli-with-gitter-module)
+  - [Example: Using Dagger CLI with Kops Module](#example-using-dagger-cli-with-kops-module)
+  - [Example: Using Dagger CLI with Container Image Module](#example-using-dagger-cli-with-container-image-module)
+  - [Example: Using Dagger CLI with Golang Module](#example-using-dagger-cli-with-golang-module)
+
 ## Overview
 
 The project is divided into several modules, each with its own specific functionality:
@@ -39,10 +54,8 @@ The project is divided into several modules, each with its own specific function
 
 ### Kops Module
 
-- **KopsContainer**: Sets up a container with specified versions of kubectl and
-  kops binaries from given URLs.
-- **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster
-  to a specified output path.
+- **KopsContainer**: Sets up a container with specified versions of kubectl and kops binaries from given URLs.
+- **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
 - **WithName**: Sets the name of the kubectl output file.
 - **WithCredentials**: Sets the credentials file.
 - **WithStateStorage**: Sets the location of the state storage.
@@ -64,9 +77,8 @@ To run the Dagger functions using the Dagger command line, follow these steps:
 3. **Run Functions**: Use the `dagger call` command followed by the function
    name to execute the desired function. For example:
 
-### Examples
-#### Using Dagger CLI with gitter Module
-To checkout a branch of a public git repository and list all files
+
+### Example: Using Dagger CLI with Gitter Module
 
 ```shell
 dagger -m gitter call with-ref --ref=develop with-repository \
@@ -74,17 +86,18 @@ dagger -m gitter call with-ref --ref=develop with-repository \
     checkout entries
 ```
 
-#### Using Dagger CLI with kops Module
-To export the kubeconfig file for a specified kops cluster, you can use the
-following Dagger CLI command:
+### Example: Using Dagger CLI with Kops Module
+
+To export the kubeconfig file for a specified Kops cluster, you can use the following Dagger CLI command:
 
 ```shell
 dagger -m kops call with-cluster --cluster=my-cluster with-state-storage \
-    --storage=gs://my-state-store with-credentials --credentials=/path/to/credentials.json \
-    with-name export-kubectl --output=./my-kubeconfig.yaml
+    --storage=s3://my-state-store with-credentials --credentials=/path/to/credentials.json \
+    with-name --name=my-kubeconfig.yaml export-kubectl
 ```
 
-#### Using Dagger CLI with container image Module
+### Example: Using Dagger CLI with Container Image Module
+
 To publish a container image to Docker Hub, you can use the following Dagger CLI command:
 
 ```shell
@@ -93,7 +106,8 @@ dagger -m container-image call with-namespace --namespace=my-namespace with-ref 
     with-image --image=my-image publish-from-repo --user=my-dockerhub-user --password=my-dockerhub-password
 ```
 
-#### Using Dagger CLI with Golang Module
+### Example: Using Dagger CLI with Golang Module
+
 To run Go language tests within a containerized environment, you can use the following Dagger CLI command:
 
 ```shell
@@ -104,4 +118,11 @@ To run golangci-lint on the Go source code, you can use the following Dagger CLI
 
 ```shell
 dagger -m golang call lint --version=v1.55.2-alpine --src=/path/to/source --args="run ./..."
+```
+
+To build and push a Docker image to a Docker registry, you can use the following Dagger CLI command:
+
+```shell
+dagger -m golang call publish --src=. --namespace=my-namespace --dockerfile=./Dockerfile \
+    --image=my-image --imageTag=latest
 ```
