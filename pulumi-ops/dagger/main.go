@@ -53,3 +53,34 @@ func (pmo *PulumiOps) WithKubeConfig(
 	pmo.KubeConfig = config
 	return pmo
 }
+
+// PulumiContainer returns a container with the specified Pulumi version.
+func (pmo *PulumiOps) PulumiContainer(ctx context.Context) *Container {
+	return dag.Container().
+		From(fmt.Sprintf("pulumi/pulumi:%s", pmo.Version))
+}
+
+// Login logs into the Pulumi backend using the provided credentials.
+func (pmo *PulumiOps) Login(ctx context.Context) *Container {
+	credFile := "/opt/credentials.json"
+	return pmo.PulumiContainer(ctx).
+		WithFile(credFile, pmo.Credentials, ContainerWithFileOpts{Permissions: 0644}).
+		WithEnvVariable(
+			"GOOGLE_APPLICATION_CREDENTIALS",
+			credFile,
+			ContainerWithEnvVariableOpts{},
+		).
+		WithExec([]string{"login", pmo.Backend})
+}
+
+// KubeAccess sets up Kubernetes access using the provided kubeconfig file.
+func (pmo *PulumiOps) KubeAccess(ctx context.Context) *Container {
+	kubeConfigFile := "/opt/kubernetes.yaml"
+	return pmo.Login(ctx).
+		WithFile(kubeConfigFile, pmo.KubeConfig, ContainerWithFileOpts{Permissions: 0644}).
+		WithEnvVariable(
+			"KUBECONFIG",
+			kubeConfigFile,
+			ContainerWithEnvVariableOpts{},
+		)
+}
