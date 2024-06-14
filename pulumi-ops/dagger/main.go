@@ -84,3 +84,39 @@ func (pmo *PulumiOps) KubeAccess(ctx context.Context) *Container {
 			ContainerWithEnvVariableOpts{},
 		)
 }
+
+// DeployBackend deploys a backend application using Pulumi configurations and specified parameters
+func (pmo *PulumiOps) DeployBackend(
+	ctx context.Context,
+	// project/folder containing pulumi configurations for deploying,
+	// required
+	src *Directory,
+	// project folder under src that has to be deployed
+	// + default="backend_application"
+	project string,
+	// application that has to be deployed,required
+	app string,
+	// image tag that has to deployed, required
+	tag string,
+	// pulumi stack name
+	// + default="dev"
+	stack string,
+) (string, error) {
+	return pmo.KubeAccess(ctx).
+		WithMountedDirectory("/mnt", src).
+		WithExec(
+			[]string{
+				"-C", project,
+				"-s", stack,
+				"config", "set",
+				fmt.Sprintf("%s.tag", app), tag,
+				"--path",
+			},
+		).
+		WithExec(
+			[]string{
+				"-C", project, "-s",
+				stack, "up", "-y",
+			},
+		).Stdout(ctx)
+}
