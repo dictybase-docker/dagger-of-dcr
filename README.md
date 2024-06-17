@@ -13,12 +13,14 @@ framework for seamless integration and execution.
   - [Container Image Module](#container-image-module)
   - [Golang Module](#golang-module)
   - [Kops Module](#kops-module)
+  - [PulumiOps Module](#pulumiops-module)
 - [Usage](#usage)
 - [Running Dagger Functions](#running-dagger-functions)
-  - [Example: Using Dagger CLI with Gitter Module](#gitter-module-1)
-  - [Example: Using Dagger CLI with Kops Module](#kops-module-1)
-  - [Example: Using Dagger CLI with Container Image Module](#container-image-module-1)
-  - [Example: Using Dagger CLI with Golang Module](#golang-module-1)
+  - [Example: Using Dagger CLI with Gitter Module](#gitter)
+  - [Example: Using Dagger CLI with Kops Module](#kops)
+  - [Example: Using Dagger CLI with Container Image Module](#container-image)
+  - [Example: Using Dagger CLI with Golang Module](#golang)
+  - [Example: Using Dagger CLI with PulumiOps Module](#pulumiops)
 
 ## Overview
 
@@ -68,7 +70,7 @@ To run the Dagger functions using the Dagger command line, follow these steps:
    name to execute the desired function. For example:
 
 ### Examples
-#### Gitter Module
+#### Gitter
 
 To set the Git reference and repository, and then check out the specified
 reference, you can use the following Dagger CLI command:
@@ -79,7 +81,7 @@ reference, you can use the following Dagger CLI command:
     checkout entries
 ```
 
-#### Kops Module
+#### Kops
 
 To export the kubeconfig file for a specified Kops cluster, you can use the
 following Dagger CLI command:
@@ -90,7 +92,7 @@ dagger -m kops call with-cluster --cluster=my-cluster with-state-storage \
     with-name --name=my-kubeconfig.yaml export-kubectl
 ```
 
-#### Container Image Module
+#### Container Image
 
 To publish a container image to Docker Hub, you can use the following Dagger CLI
 command:
@@ -101,7 +103,7 @@ dagger -m container-image call with-namespace --namespace=my-namespace with-ref 
     with-image --image=my-image publish-from-repo --user=my-dockerhub-user --password=my-dockerhub-password
 ```
 
-#### Golang Module
+#### Golang
 
 To run Go language tests within a containerized environment, you can use the
 following Dagger CLI command:
@@ -123,7 +125,7 @@ dagger -m golang call publish --src=. --namespace=my-namespace --dockerfile=./Do
     --image=my-image --imageTag=latest
 ```
 
-#### PulumiOps Module
+#### PulumiOps
 
 To deploy a backend application using Pulumi configurations and specified
 parameters, you can use the following Dagger CLI command:
