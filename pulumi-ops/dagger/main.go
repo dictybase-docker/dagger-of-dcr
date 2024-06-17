@@ -104,6 +104,7 @@ func (pmo *PulumiOps) DeployBackend(
 ) (string, error) {
 	return pmo.KubeAccess(ctx).
 		WithMountedDirectory("/mnt", src).
+		WithWorkdir("/mnt").
 		WithExec(
 			[]string{
 				"-C", project,
@@ -116,7 +117,7 @@ func (pmo *PulumiOps) DeployBackend(
 		WithExec(
 			[]string{
 				"-C", project, "-s",
-				stack, "up", "-y",
+				stack, "up", "-y", "-r", "-f", "--non-interactive",
 			},
 		).Stdout(ctx)
 }
