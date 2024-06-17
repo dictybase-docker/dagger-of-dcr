@@ -35,25 +35,21 @@ The project is divided into several modules, each with its own specific function
 ## Modules and Functions
 
 ### Gitter Module
-- **Checkout**: Clones the repository and checks out the specified reference.
+- `Checkout`: Clones the repository and checks out the specified reference.
 
 ### Container Image Module
-
-- **PublishFromRepo**: Publishes a container image to Docker Hub.
+- `PublishFromRepo`: Publishes a container image to Docker Hub.
 
 ### Golang Module
-
-- **Test**: Runs Go language tests within a containerized environment.
-- **Lint**: Runs golangci-lint on the Go source code.
-- **Publish**: Builds and pushes a Docker image to a Docker registry.
+- `Test`: Runs Go language tests within a containerized environment.
+- `Lint`: Runs golangci-lint on the Go source code.
+- `Publish`: Builds and pushes a Docker image to a Docker registry.
 
 ### Kops Module
-
-- **ExportKubectl**: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
+- `ExportKubectl`: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
 
 ### PulumiOps Module
-
-- **DeployBackend**: Deploys a backend application using Pulumi configurations and specified parameters.
+- `DeployBackend`: Deploys a backend application using Pulumi configurations and specified parameters.
 
 ## Usage
 
