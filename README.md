@@ -15,10 +15,10 @@ framework for seamless integration and execution.
   - [Kops Module](#kops-module)
 - [Usage](#usage)
 - [Running Dagger Functions](#running-dagger-functions)
-  - [Example: Using Dagger CLI with Gitter Module](#example-using-dagger-cli-with-gitter-module)
-  - [Example: Using Dagger CLI with Kops Module](#example-using-dagger-cli-with-kops-module)
-  - [Example: Using Dagger CLI with Container Image Module](#example-using-dagger-cli-with-container-image-module)
-  - [Example: Using Dagger CLI with Golang Module](#example-using-dagger-cli-with-golang-module)
+  - [Example: Using Dagger CLI with Gitter Module](#gitter-module-1)
+  - [Example: Using Dagger CLI with Kops Module](#kops-module-1)
+  - [Example: Using Dagger CLI with Container Image Module](#container-image-module-1)
+  - [Example: Using Dagger CLI with Golang Module](#golang-module-1)
 
 ## Overview
 
