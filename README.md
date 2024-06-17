@@ -15,12 +15,12 @@ framework for seamless integration and execution.
   - [Kops Module](#kops-module)
   - [PulumiOps Module](#pulumiops-module)
 - [Usage](#usage)
-- [Running Dagger Functions](#running-dagger-functions)
-  - [Example: Using Dagger CLI with Gitter Module](#gitter)
-  - [Example: Using Dagger CLI with Kops Module](#kops)
-  - [Example: Using Dagger CLI with Container Image Module](#container-image)
-  - [Example: Using Dagger CLI with Golang Module](#golang)
-  - [Example: Using Dagger CLI with PulumiOps Module](#pulumiops)
+- [Examples of running Dagger functions using CLI](#running-dagger-functions)
+  - [Gitter Module](#gitter)
+  - [Kops Module](#kops)
+  - [Container Image Module](#container-image)
+  - [Golang Module](#golang)
+  - [PulumiOps Module](#pulumiops)
 
 ## Overview
 
