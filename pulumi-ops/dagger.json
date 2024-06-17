@@ -1,6 +1,12 @@
 {
   "name": "pulumi-ops",
   "sdk": "go",
+  "dependencies": [
+    {
+      "name": "kops",
+      "source": "../kops"
+    }
+  ],
   "source": "dagger",
   "engineVersion": "v0.11.4"
 }
