@@ -13,12 +13,14 @@ framework for seamless integration and execution.
   - [Container Image Module](#container-image-module)
   - [Golang Module](#golang-module)
   - [Kops Module](#kops-module)
+  - [PulumiOps Module](#pulumiops-module)
 - [Usage](#usage)
 - [Running Dagger Functions](#running-dagger-functions)
   - [Example: Using Dagger CLI with Gitter Module](#example-using-dagger-cli-with-gitter-module)
   - [Example: Using Dagger CLI with Kops Module](#example-using-dagger-cli-with-kops-module)
   - [Example: Using Dagger CLI with Container Image Module](#example-using-dagger-cli-with-container-image-module)
   - [Example: Using Dagger CLI with Golang Module](#example-using-dagger-cli-with-golang-module)
+  - [Example: Using Dagger CLI with PulumiOps Module](#example-using-dagger-cli-with-pulumiops-module)
 
 ## Overview
 
@@ -28,6 +30,7 @@ The project is divided into several modules, each with its own specific function
 2. **Container Image Module**: Manages and builds Docker container images based on Git references. It includes methods to set various properties of the container image and generate appropriate Docker image tags.
 3. **Golang Module**: Provides functions to run Go language tests, lint Go source code, and publish Docker images.
 4. **Kops Module**: Provides functionality to set up and manage Kubernetes clusters using Kops and kubectl binaries.
+5. **PulumiOps Module**: Provides functionality to manage Pulumi operations, including setting Pulumi version, backend, credentials, and Kubernetes configuration.
 
 ## Modules and Functions
 
@@ -63,6 +66,17 @@ The project is divided into several modules, each with its own specific function
 - **WithKops**: Sets the Kops version.
 - **WithKubectl**: Sets the kubectl version.
 
+### PulumiOps Module
+
+- **WithPulumi**: Sets the Pulumi version for the PulumiOps instance.
+- **WithBackend**: Sets the backend for storing state for the PulumiOps instance.
+- **WithCredentials**: Sets the credentials file for the PulumiOps instance.
+- **WithKubeConfig**: Sets the Kubernetes configuration file for the PulumiOps instance.
+- **PulumiContainer**: Returns a container with the specified Pulumi version.
+- **Login**: Logs into the Pulumi backend using the provided credentials.
+- **KubeAccess**: Sets up Kubernetes access using the provided kubeconfig file.
+- **DeployBackend**: Deploys a backend application using Pulumi configurations and specified parameters.
+
 ## Usage
 
 ## Running Dagger Functions
@@ -77,11 +91,12 @@ To run the Dagger functions using the Dagger command line, follow these steps:
 3. **Run Functions**: Use the `dagger call` command followed by the function
    name to execute the desired function. For example:
 
-
 ### Example: Using Dagger CLI with Gitter Module
 
+To set the Git reference and repository, and then check out the specified reference, you can use the following Dagger CLI command:
+
 ```shell
-dagger -m gitter call with-ref --ref=develop with-repository \
+ dagger -m gitter call with-ref --ref=develop with-repository \
     --repository=https://github.com/dictybase-playground/gdrive-image-uploadr.git \
     checkout entries
 ```
@@ -125,4 +140,13 @@ To build and push a Docker image to a Docker registry, you can use the following
 ```shell
 dagger -m golang call publish --src=. --namespace=my-namespace --dockerfile=./Dockerfile \
     --image=my-image --imageTag=latest
+```
+
+### Example: Using Dagger CLI with PulumiOps Module
+
+To deploy a backend application using Pulumi configurations and specified parameters, you can use the following Dagger CLI command:
+
+```shell
+dagger -m pulumi-ops call deploy-backend --src=/path/to/source --project=backend_application \
+    --app=my-app --tag=latest --stack=dev
 ```
