@@ -49,7 +49,7 @@ The project is divided into several modules, each with its own specific function
 - `ExportKubectl`: Exports the kubeconfig file for the specified Kops cluster to a specified output path.
 
 ### PulumiOps Module
-- `DeployBackend`: Deploys a backend application using Pulumi configurations and specified parameters.
+- `DeployApp`: Deploys a backend application using Pulumi configurations and specified parameters.
 
 ## Usage
 
@@ -127,7 +127,7 @@ To deploy a backend application using Pulumi configurations and specified
 parameters, you can use the following Dagger CLI command:
 
 ```shell
-dagger -m pulumi-ops call deploy-backend --src=/path/to/source --project=backend_application \
+dagger -m pulumi-ops call deploy-app --src=/path/to/source --project=backend_application \
     --app=my-app --tag=latest --stack=dev
 ```
 

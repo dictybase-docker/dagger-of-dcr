@@ -85,8 +85,8 @@ func (pmo *PulumiOps) KubeAccess(ctx context.Context) *Container {
 		)
 }
 
-// DeployBackend deploys a backend application using Pulumi configurations and specified parameters.
-func (pmo *PulumiOps) DeployBackend(
+// DeployApp deploys a dictycr application using Pulumi configurations and specified parameters.
+func (pmo *PulumiOps) DeployApp(
 	ctx context.Context,
 	// project/folder containing pulumi configurations for deploying,
 	// required
@@ -116,8 +116,16 @@ func (pmo *PulumiOps) DeployBackend(
 		).
 		WithExec(
 			[]string{
-				"-C", project, "-s",
-				stack, "up", "-y", "-r", "-f", "--non-interactive",
+				"-C",
+				project,
+				"-s",
+				stack,
+				"up",
+				"-y",
+				"-r",
+				"-f",
+				"--non-interactive",
 			},
-		).Stdout(ctx)
+		).
+		Stdout(ctx)
 }
