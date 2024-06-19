@@ -5,6 +5,11 @@ import (
 	"fmt"
 )
 
+const (
+	pulumiOpsRepo   = "https://github.com/dictybase-docker/cluster-ops.git"
+	pulumiOpsBranch = "master"
+)
+
 // PulumiOps represents the Pulumi operations configuration.
 type PulumiOps struct {
 	Backend     string
@@ -88,9 +93,6 @@ func (pmo *PulumiOps) KubeAccess(ctx context.Context) *Container {
 // DeployApp deploys a dictycr application using Pulumi configurations and specified parameters.
 func (pmo *PulumiOps) DeployApp(
 	ctx context.Context,
-	// project/folder containing pulumi configurations for deploying,
-	// required
-	src *Directory,
 	// project folder under src that has to be deployed
 	// + default="backend_application"
 	project string,
@@ -102,8 +104,12 @@ func (pmo *PulumiOps) DeployApp(
 	// + default="dev"
 	stack string,
 ) (string, error) {
+	opsDir := dag.Gitter().
+		WithRef(pulumiOpsBranch).
+		WithRepository(pulumiOpsRepo).
+		Checkout()
 	return pmo.KubeAccess(ctx).
-		WithMountedDirectory("/mnt", src).
+		WithMountedDirectory("/mnt", opsDir).
 		WithWorkdir("/mnt").
 		WithExec(
 			[]string{
