@@ -10,6 +10,8 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+
+	"github.com/google/uuid"
 )
 
 type Kops struct {
@@ -50,7 +52,12 @@ func (kmg *Kops) KopsContainer(ctx context.Context) *Container {
 func (kmg *Kops) ExportKubectl(ctx context.Context) (*File, error) {
 	credFile := "/opt/credentials.json"
 	outPath := "/work/out"
-	outFile := filepath.Join(outPath, kmg.Name)
+	uuid.EnableRandPool()
+	rndId, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("error in generating random uuid %s", err)
+	}
+	outFile := filepath.Join(outPath, fmt.Sprintf("%s.yaml", rndId.String()))
 	cmd := []string{
 		"kops",
 		"export",
