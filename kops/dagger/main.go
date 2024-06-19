@@ -79,17 +79,6 @@ func (kmg *Kops) ExportKubectl(ctx context.Context) (*File, error) {
 		).WithExec(cmd).File(outFile), nil
 }
 
-// WithName sets the name of the kubectl output file
-func (kmg *Kops) WithName(
-	ctx context.Context,
-	// name of the kubectl output file
-	// + default="kubefromkops.yaml"
-	name string,
-) *Kops {
-	kmg.Name = name
-	return kmg
-}
-
 // WithCredentials sets the credentials file
 func (kmg *Kops) WithCredentials(
 	ctx context.Context,
