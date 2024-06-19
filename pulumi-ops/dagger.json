@@ -3,6 +3,10 @@
   "sdk": "go",
   "dependencies": [
     {
+      "name": "gitter",
+      "source": "../gitter"
+    },
+    {
       "name": "kops",
       "source": "../kops"
     }
