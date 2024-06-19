@@ -85,7 +85,7 @@ following Dagger CLI command:
 ```shell
 dagger -m kops call with-cluster --cluster=my-cluster with-state-storage \
     --storage=s3://my-state-store with-credentials --credentials=/path/to/credentials.json \
-    with-name --name=my-kubeconfig.yaml export-kubectl
+    export-kubectl --output=./mykube.yaml
 ```
 
 #### Container Image
