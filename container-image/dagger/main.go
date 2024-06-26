@@ -13,6 +13,7 @@ import (
 var (
 	shaRe    = regexp.MustCompile("^[0-9a-f]{7,40}$")
 	semverRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
+	bre      = regexp.MustCompile(`^refs/heads|tags/(.+)$`)
 )
 
 type ContainerImage struct {
@@ -142,6 +143,9 @@ func (cmg *ContainerImage) ImageTag(
 		genTag = cmg.Ref
 	case shaRe.MatchString(cmg.Ref):
 		genTag = fmt.Sprintf("sha-%s", formatSha(cmg.Ref))
+	case bre.MatchString(cmg.Ref):
+		match := bre.FindStringSubmatch(cmg.Ref)
+		genTag = match[1]
 	default:
 		dtag, err := cmg.generateDefaultTag(ctx, source)
 		if err != nil {
