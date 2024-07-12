@@ -95,7 +95,7 @@ func (cmg *ContainerImage) PublishFromRepo(
 	if err != nil {
 		return "", err
 	}
-	return cont.WithRegistryAuth(
+	_, err = cont.WithRegistryAuth(
 		"docker.io",
 		user,
 		dag.SetSecret("docker-pass", password),
@@ -108,6 +108,10 @@ func (cmg *ContainerImage) PublishFromRepo(
 			cmg.DockerImageTag,
 		),
 	)
+	if err != nil {
+		return "", fmt.Errorf("error in publishing docker container %s", err)
+	}
+	return cmg.DockerImageTag, nil
 }
 
 // FakePublishFromRepo publishes a container image to a temporary repository with a time-to-live of 10 minutes.
