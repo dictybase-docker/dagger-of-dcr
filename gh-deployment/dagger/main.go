@@ -2,7 +2,21 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 )
+
+// parseOwnerRepo splits the repository string into owner and repo
+func parseOwnerRepo(ownerRepo string) (string, string, error) {
+	parts := strings.Split(ownerRepo, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf(
+			"invalid repository format, expected owner/repo %s",
+			ownerRepo,
+		)
+	}
+	return parts[0], parts[1], nil
+}
 
 type GhDeployment struct {
 	// Repository name with owner, for example, "tora/bora"
