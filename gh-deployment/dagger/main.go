@@ -10,6 +10,35 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type GhDeployment struct {
+	// Repository name with owner, for example, "tora/bora"
+	Repository string
+	// Git reference, for example, "refs/heads/main"
+	Ref string
+	// Dagger version, for example, "v0.11.6"
+	DaggerVersion string
+	// Dagger checksum
+	DaggerChecksum string
+	// Cluster name
+	Cluster string
+	// Storage name
+	Storage string
+	// Kube config file path
+	KubeConfig string
+	// Artifact name
+	Artifact string
+	// Image tag
+	ImageTag string
+	// Application name
+	Application string
+	// Stack name
+	Stack string
+	// Run ID
+	RunId int
+	// Environment name, default is "development"
+	Environment string
+}
+
 // CreateGitHubDeployment creates a GitHub deployment
 func (ghd *GhDeployment) CreateGithubDeployment(
 	ctx context.Context,
@@ -28,6 +57,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 	}
 
 	deploymentRequest := &github.DeploymentRequest{
+		AutoMerge:        github.Bool(false),
 		Ref:              github.String(ghd.Ref),
 		Description:      github.String("Deployment created by GhDeployment"),
 		RequiredContexts: &[]string{}, // Skip status checks
@@ -68,33 +98,6 @@ func parseOwnerRepo(ownerRepo string) (string, string, error) {
 		)
 	}
 	return parts[0], parts[1], nil
-}
-
-type GhDeployment struct {
-	// Repository name with owner, for example, "tora/bora"
-	Repository string
-	// Git reference, for example, "refs/heads/main"
-	Ref string
-	// Dagger version, for example, "v0.11.6"
-	DaggerVersion string
-	// Dagger checksum
-	DaggerChecksum string
-	// Cluster name
-	Cluster string
-	// Storage name
-	Storage string
-	// Kube config file path
-	KubeConfig string
-	// Artifact name
-	Artifact string
-	// Image tag
-	ImageTag string
-	// Application name
-	Application string
-	// Stack name
-	Stack string
-	// Run ID
-	RunId int
 }
 
 // WithRepository sets the GitHub repository name
