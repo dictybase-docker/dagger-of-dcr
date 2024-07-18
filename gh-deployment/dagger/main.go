@@ -1,17 +1,3 @@
-// A generated module for GhDeployment functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
-
 package main
 
 import (
@@ -19,20 +5,30 @@ import (
 )
 
 type GhDeployment struct {
-	// Repository name
+	// Repository name with owner, for example, "tora/bora"
 	Repository string
-	// Git reference
-	Ref            string
-	DaggerVersion  string
+	// Git reference, for example, "refs/heads/main"
+	Ref string
+	// Dagger version, for example, "v0.11.6"
+	DaggerVersion string
+	// Dagger checksum
 	DaggerChecksum string
-	Cluster        string
-	Storage        string
-	KubeConfig     string
-	Artifact       string
-	ImageTag       string
-	Application    string
-	Stack          string
-	RunId          int
+	// Cluster name
+	Cluster string
+	// Storage name
+	Storage string
+	// Kube config file path
+	KubeConfig string
+	// Artifact name
+	Artifact string
+	// Image tag
+	ImageTag string
+	// Application name
+	Application string
+	// Stack name
+	Stack string
+	// Run ID
+	RunId int
 }
 
 // WithRepository sets the GitHub repository name
@@ -143,9 +139,9 @@ func (ghd *GhDeployment) WithImageTag(
 	return ghd, nil
 }
 
-// WithApplication sets the application name
+// WithApplication sets the application
 func (ghd *GhDeployment) WithApplication(
-	// Application name, Required
+	// Application, Required
 	application string,
 ) (*GhDeployment, error) {
 	if len(application) == 0 {
@@ -155,9 +151,9 @@ func (ghd *GhDeployment) WithApplication(
 	return ghd, nil
 }
 
-// WithStack sets the stack name
+// WithStack sets the stack
 func (ghd *GhDeployment) WithStack(
-	// Stack name, Required
+	// Stack, Required
 	stack string,
 ) (*GhDeployment, error) {
 	if len(stack) == 0 {
