@@ -1,10 +1,62 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/google/go-github/v63/github"
+	"golang.org/x/oauth2"
 )
+
+// CreateGitHubDeployment creates a GitHub deployment
+func (ghd *GhDeployment) CreateGithubDeployment(
+	ctx context.Context,
+	// Github token for makding api requests
+	token string,
+) (int, error) {
+	var dplId int
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+
+	ownerRepo := ghd.Repository
+	owner, repo, err := parseOwnerRepo(ownerRepo)
+	if err != nil {
+		return dplId, err
+	}
+
+	deploymentRequest := &github.DeploymentRequest{
+		Ref:              github.String(ghd.Ref),
+		Description:      github.String("Deployment created by GhDeployment"),
+		RequiredContexts: &[]string{}, // Skip status checks
+		Payload: map[string]interface{}{
+			"dagger_version":  ghd.DaggerVersion,
+			"dagger_checksum": ghd.DaggerChecksum,
+			"cluster":         ghd.Cluster,
+			"storage":         ghd.Storage,
+			"kube_config":     ghd.KubeConfig,
+			"artifact":        ghd.Artifact,
+			"image_tag":       ghd.ImageTag,
+			"application":     ghd.Application,
+			"stack":           ghd.Stack,
+			"run_id":          ghd.RunId,
+		},
+	}
+
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+	dpl, _, err := client.Repositories.CreateDeployment(
+		ctx,
+		owner,
+		repo,
+		deploymentRequest,
+	)
+	if err != nil {
+		return dplId, fmt.Errorf("error in creating deployment %s", err)
+	}
+	return int(dpl.GetID()), nil
+}
 
 // parseOwnerRepo splits the repository string into owner and repo
 func parseOwnerRepo(ownerRepo string) (string, string, error) {
