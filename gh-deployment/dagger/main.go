@@ -44,7 +44,7 @@ type GhDeployment struct {
 // CreateGitHubDeployment creates a GitHub deployment
 func (ghd *GhDeployment) CreateGithubDeployment(
 	ctx context.Context,
-	// Github token for makding api requests
+	// Github token for making api requests
 	token string,
 ) (int, error) {
 	var dplId int
@@ -58,10 +58,16 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 	}
 
 	deploymentRequest := &github.DeploymentRequest{
-		Environment:      github.String(ghd.Environment),
-		AutoMerge:        github.Bool(false),
-		Ref:              github.String(ghd.Ref),
-		Description:      github.String("Deployment created by GhDeployment"),
+		Environment: github.String(ghd.Environment),
+		AutoMerge:   github.Bool(false),
+		Ref:         github.String(ghd.Ref),
+		Description: github.String(
+			fmt.Sprintf(
+				"Deploying %s to %s environment",
+				ghd.Application,
+				ghd.Environment,
+			),
+		),
 		RequiredContexts: &[]string{}, // Skip status checks
 		Payload: map[string]interface{}{
 			"dockerfile":      ghd.Dockerfile,
