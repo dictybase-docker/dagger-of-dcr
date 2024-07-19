@@ -57,6 +57,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 	}
 
 	deploymentRequest := &github.DeploymentRequest{
+		Environment:      github.String(ghd.Environment),
 		AutoMerge:        github.Bool(false),
 		Ref:              github.String(ghd.Ref),
 		Description:      github.String("Deployment created by GhDeployment"),
@@ -72,6 +73,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 			"application":     ghd.Application,
 			"stack":           ghd.Stack,
 			"run_id":          ghd.RunId,
+			"repository":      ghd.Repository,
 		},
 	}
 
