@@ -243,3 +243,13 @@ func (ghd *GhDeployment) WithRunId(
 	ghd.RunId = runId
 	return ghd, nil
 }
+
+// WithEnvironment sets the environment with a default value of "development"
+func (ghd *GhDeployment) WithEnvironment(
+	// Environment, Optional
+	environment string,
+	// +default="development"
+) (*GhDeployment, error) {
+	ghd.Environment = environment
+	return ghd, nil
+}
