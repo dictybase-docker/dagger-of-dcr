@@ -37,6 +37,8 @@ type GhDeployment struct {
 	RunId int
 	// Environment name, default is "development"
 	Environment string
+	// Dockerfile path
+	Dockerfile string
 }
 
 // CreateGitHubDeployment creates a GitHub deployment
@@ -50,8 +52,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		&oauth2.Token{AccessToken: token},
 	)
 
-	ownerRepo := ghd.Repository
-	owner, repo, err := parseOwnerRepo(ownerRepo)
+	owner, repo, err := parseOwnerRepo(ghd.Repository)
 	if err != nil {
 		return dplId, err
 	}
@@ -63,6 +64,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		Description:      github.String("Deployment created by GhDeployment"),
 		RequiredContexts: &[]string{}, // Skip status checks
 		Payload: map[string]interface{}{
+			"dockerfile":      ghd.Dockerfile,
 			"dagger_version":  ghd.DaggerVersion,
 			"dagger_checksum": ghd.DaggerChecksum,
 			"cluster":         ghd.Cluster,
@@ -253,5 +255,17 @@ func (ghd *GhDeployment) WithEnvironment(
 	// +default="development"
 ) (*GhDeployment, error) {
 	ghd.Environment = environment
+	return ghd, nil
+}
+
+// WithDockerfile sets the Dockerfile path
+func (ghd *GhDeployment) WithDockerfile(
+	// Dockerfile path, Required
+	dockerfile string,
+) (*GhDeployment, error) {
+	if len(dockerfile) == 0 {
+		return ghd, errors.New("dockerfile value is required")
+	}
+	ghd.Dockerfile = dockerfile
 	return ghd, nil
 }
