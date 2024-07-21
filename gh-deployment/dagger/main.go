@@ -4,10 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
+)
+
+var (
+	shaRe    = regexp.MustCompile("^[0-9a-f]{7,40}$")
+	semverRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
+	bre      = regexp.MustCompile(`^refs/heads|tags/(.+)$`)
 )
 
 type GhDeployment struct {
@@ -27,8 +34,8 @@ type GhDeployment struct {
 	KubeConfig string
 	// Artifact name
 	Artifact string
-	// Image tag
-	ImageTag string
+	// Docker Image tag
+	DockerImageTag string
 	// Application name
 	Application string
 	// Stack name
@@ -57,6 +64,12 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		return dplId, err
 	}
 
+	if len(ghd.DockerImageTag) == 0 {
+		if err := ghd.GenerateImageTag(ctx); err != nil {
+			return dplId, err
+		}
+	}
+
 	deploymentRequest := &github.DeploymentRequest{
 		Environment: github.String(ghd.Environment),
 		AutoMerge:   github.Bool(false),
@@ -70,18 +83,18 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		),
 		RequiredContexts: &[]string{}, // Skip status checks
 		Payload: map[string]interface{}{
-			"dockerfile":      ghd.Dockerfile,
-			"dagger_version":  ghd.DaggerVersion,
-			"dagger_checksum": ghd.DaggerChecksum,
-			"cluster":         ghd.Cluster,
-			"storage":         ghd.Storage,
-			"kube_config":     ghd.KubeConfig,
-			"artifact":        ghd.Artifact,
-			"image_tag":       ghd.ImageTag,
-			"application":     ghd.Application,
-			"stack":           ghd.Stack,
-			"run_id":          ghd.RunId,
-			"repository":      ghd.Repository,
+			"dockerfile":       ghd.Dockerfile,
+			"dagger_version":   ghd.DaggerVersion,
+			"dagger_checksum":  ghd.DaggerChecksum,
+			"cluster":          ghd.Cluster,
+			"storage":          ghd.Storage,
+			"kube_config":      ghd.KubeConfig,
+			"artifact":         ghd.Artifact,
+			"docker_image_tag": ghd.DockerImageTag,
+			"application":      ghd.Application,
+			"stack":            ghd.Stack,
+			"run_id":           ghd.RunId,
+			"repository":       ghd.Repository,
 		},
 	}
 
@@ -96,18 +109,6 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		return dplId, fmt.Errorf("error in creating deployment %s", err)
 	}
 	return int(dpl.GetID()), nil
-}
-
-// parseOwnerRepo splits the repository string into owner and repo
-func parseOwnerRepo(ownerRepo string) (string, string, error) {
-	parts := strings.Split(ownerRepo, "/")
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf(
-			"invalid repository format, expected owner/repo %s",
-			ownerRepo,
-		)
-	}
-	return parts[0], parts[1], nil
 }
 
 // WithRepository sets the GitHub repository name
@@ -206,15 +207,12 @@ func (ghd *GhDeployment) WithArtifact(
 	return ghd, nil
 }
 
-// WithImageTag sets the image tag
+// WithImageTag sets the docker image tag
 func (ghd *GhDeployment) WithImageTag(
-	// Image tag, Required
+	// Image tag, optional
 	imageTag string,
 ) (*GhDeployment, error) {
-	if len(imageTag) == 0 {
-		return ghd, errors.New("imageTag value is required")
-	}
-	ghd.ImageTag = imageTag
+	ghd.DockerImageTag = imageTag
 	return ghd, nil
 }
 
@@ -274,4 +272,71 @@ func (ghd *GhDeployment) WithDockerfile(
 	}
 	ghd.Dockerfile = dockerfile
 	return ghd, nil
+}
+
+func (ghd *GhDeployment) GenerateImageTag(
+	ctx context.Context,
+) error {
+	source := dag.Gitter().
+		WithRef(ghd.Ref).
+		WithRepository(ghd.Repository).
+		Checkout()
+	var genTag string
+	switch {
+	case semverRe.MatchString(ghd.Ref):
+		genTag = ghd.Ref
+	case shaRe.MatchString(ghd.Ref):
+		genTag = fmt.Sprintf("sha-%s", formatSha(ghd.Ref))
+	case bre.MatchString(ghd.Ref):
+		match := bre.FindStringSubmatch(ghd.Ref)
+		genTag = match[1]
+	default:
+		dtag, err := ghd.generateDefaultTag(ctx, source)
+		if err != nil {
+			return err
+		}
+		genTag = dtag
+	}
+	ghd.DockerImageTag = genTag
+	return nil
+}
+
+func (ghd *GhDeployment) generateDefaultTag(
+	ctx context.Context,
+	source *Directory,
+) (string, error) {
+	commitHash, err := dag.Git().
+		Load(source).
+		Command([]string{"rev-parse", "HEAD"}).Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+	parsedRef, err := dag.Gitter().WithRef(ghd.Ref).ParseRef(ctx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s-%s",
+		parsedRef,
+		formatSha(commitHash),
+	), nil
+}
+
+func formatSha(sha string) string {
+	if len(sha) > 7 {
+		return sha[:7]
+	}
+	return sha
+}
+
+// parseOwnerRepo splits the repository string into owner and repo
+func parseOwnerRepo(ownerRepo string) (string, string, error) {
+	parts := strings.Split(ownerRepo, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf(
+			"invalid repository format, expected owner/repo %s",
+			ownerRepo,
+		)
+	}
+	return parts[0], parts[1], nil
 }
