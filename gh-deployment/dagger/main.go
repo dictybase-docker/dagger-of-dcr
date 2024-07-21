@@ -46,6 +46,8 @@ type GhDeployment struct {
 	Environment string
 	// Dockerfile path
 	Dockerfile string
+	// Docker namespace
+	DockerNamespace string
 }
 
 // CreateGitHubDeployment creates a GitHub deployment
@@ -91,6 +93,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 			"kube_config":      ghd.KubeConfig,
 			"artifact":         ghd.Artifact,
 			"docker_image_tag": ghd.DockerImageTag,
+			"docker_namespace": ghd.DockerNamespace,
 			"application":      ghd.Application,
 			"stack":            ghd.Stack,
 			"run_id":           ghd.RunId,
@@ -271,6 +274,18 @@ func (ghd *GhDeployment) WithDockerfile(
 		return ghd, errors.New("dockerfile value is required")
 	}
 	ghd.Dockerfile = dockerfile
+	return ghd, nil
+}
+
+// WithDockerNamespace sets the Docker namespace
+func (ghd *GhDeployment) WithDockerNamespace(
+	// Docker namespace, Required
+	dockerNamespace string,
+) (*GhDeployment, error) {
+	if len(dockerNamespace) == 0 {
+		return ghd, errors.New("dockerNamespace value is required")
+	}
+	ghd.DockerNamespace = dockerNamespace
 	return ghd, nil
 }
 
