@@ -48,6 +48,8 @@ type GhDeployment struct {
 	Dockerfile string
 	// Docker namespace
 	DockerNamespace string
+	// Docker image
+	DockerImage string
 }
 
 // CreateGitHubDeployment creates a GitHub deployment
@@ -57,9 +59,6 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 	token string,
 ) (int, error) {
 	var dplId int
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
 
 	owner, repo, err := parseOwnerRepo(ghd.Repository)
 	if err != nil {
@@ -92,6 +91,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 			"storage":          ghd.Storage,
 			"kube_config":      ghd.KubeConfig,
 			"artifact":         ghd.Artifact,
+			"docker_image":     ghd.DockerImageTag,
 			"docker_image_tag": ghd.DockerImageTag,
 			"docker_namespace": ghd.DockerNamespace,
 			"application":      ghd.Application,
@@ -101,6 +101,9 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		},
 	}
 
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
 	client := github.NewClient(oauth2.NewClient(ctx, ts))
 	dpl, _, err := client.Repositories.CreateDeployment(
 		ctx,
@@ -286,6 +289,18 @@ func (ghd *GhDeployment) WithDockerNamespace(
 		return ghd, errors.New("dockerNamespace value is required")
 	}
 	ghd.DockerNamespace = dockerNamespace
+	return ghd, nil
+}
+
+// WithDockerImage sets the Docker image
+func (ghd *GhDeployment) WithDockerImage(
+	// Docker image, Required
+	dockerImage string,
+) (*GhDeployment, error) {
+	if len(dockerImage) == 0 {
+		return ghd, errors.New("dockerImage value is required")
+	}
+	ghd.DockerImage = dockerImage
 	return ghd, nil
 }
 
