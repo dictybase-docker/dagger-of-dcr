@@ -2,13 +2,36 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
+
+	"github.com/google/go-github/v63/github"
+	"golang.org/x/oauth2"
 )
 
 const (
 	pulumiOpsRepo   = "https://github.com/dictybase-docker/cluster-ops.git"
 	pulumiOpsBranch = "master"
 )
+
+type Payload struct {
+	Project         string `json:"project"`
+	Repository      string `json:"repository"`
+	DaggerVersion   string `json:"dagger_version"`
+	DaggerChecksum  string `json:"dagger_checksum"`
+	Cluster         string `json:"cluster"`
+	Storage         string `json:"storage"`
+	KubeConfig      string `json:"kube_config"`
+	Artifact        string `json:"artifact"`
+	DockerImage     string `json:"docker_image"`
+	DockerImageTag  string `json:"docker_image_tag"`
+	Dockerfile      string `json:"dockerfile"`
+	DockerNamespace string `json:"docker_namespace"`
+	Application     string `json:"application"`
+	Stack           string `json:"stack"`
+	RunId           int    `json:"run_id"`
+}
 
 // PulumiOps represents the Pulumi operations configuration.
 type PulumiOps struct {
@@ -17,7 +40,7 @@ type PulumiOps struct {
 	KubeConfig  *File
 	Credentials *File
 	// Repository name
-	Repository  string
+	Repository string
 }
 
 // WithPulumi sets the Pulumi version for the PulumiOps instance.
@@ -148,4 +171,86 @@ func (pmo *PulumiOps) DeployApp(
 		Stdout(ctx)
 }
 
+// DeployBackendThroughGithub deploys the backend using a GitHub deployment ID and token.
+func (pmo *PulumiOps) DeployBackendThroughGithub(
+	ctx context.Context,
+	// Deployment ID, Required
+	deploymentID int,
+	// GitHub token for making API requests, Required
+	token string,
+) (string, error) {
+	var emptyStr string
+	owner, repo, err := parseOwnerRepo(pmo.Repository)
+	if err != nil {
+		return emptyStr, err
+	}
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+	deployment, _, err := client.Repositories.GetDeployment(
+		ctx,
+		owner,
+		repo,
+		int64(deploymentID),
+	)
+	if err != nil {
+		return emptyStr, fmt.Errorf(
+			"error in getting deployment information: %s",
+			err,
+		)
+	}
+	var pload Payload
+	if err := json.Unmarshal(deployment.Payload, &pload); err != nil {
+		return emptyStr, fmt.Errorf("error in decoding payload %s", err)
+	}
+	if pload.Repository != pmo.Repository {
+		return emptyStr, fmt.Errorf(
+			"payload repo %s and given repo %s does not match",
+			pload.Repository,
+			pmo.Repository,
+		)
+	}
+	opsDir := dag.Gitter().
+		WithRef(deployment.GetRef()).
+		WithRepository(pload.Repository).
+		Checkout()
+	return pmo.WithKubeConfig(ctx, dag.Container().File(pload.KubeConfig)).
+		KubeAccess(ctx).
+		WithMountedDirectory("/mnt", opsDir).
+		WithWorkdir("/mnt").
+		WithExec(
+			[]string{
+				"-C", pload.Project,
+				"-s", pload.Stack,
+				"config", "set",
+				fmt.Sprintf("%s.tag", pload.Application), pload.DockerImageTag,
+				"--path",
+			},
+		).
+		WithExec(
+			[]string{
+				"-C",
+				pload.Project,
+				"-s",
+				pload.Stack,
+				"up",
+				"-y",
+				"-r",
+				"-f",
+				"--non-interactive",
+			},
+		).
+		Stdout(ctx)
+}
 
+// parseOwnerRepo splits the repository string into owner and repo
+func parseOwnerRepo(ownerRepo string) (string, string, error) {
+	parts := strings.Split(ownerRepo, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf(
+			"invalid repository format, expected 'owner/repo'",
+		)
+	}
+	return parts[0], parts[1], nil
+}
