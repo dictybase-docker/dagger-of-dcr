@@ -16,6 +16,8 @@ type PulumiOps struct {
 	Version     string
 	KubeConfig  *File
 	Credentials *File
+	// Repository name
+	Repository  string
 }
 
 // WithPulumi sets the Pulumi version for the PulumiOps instance.
@@ -56,6 +58,16 @@ func (pmo *PulumiOps) WithKubeConfig(
 	config *File,
 ) *PulumiOps {
 	pmo.KubeConfig = config
+	return pmo
+}
+
+// WithRepository sets the repository name
+func (pmo *PulumiOps) WithRepository(
+	ctx context.Context,
+	// Repository name, Required
+	repository string,
+) *PulumiOps {
+	pmo.Repository = repository
 	return pmo
 }
 
@@ -135,3 +147,5 @@ func (pmo *PulumiOps) DeployApp(
 		).
 		Stdout(ctx)
 }
+
+
