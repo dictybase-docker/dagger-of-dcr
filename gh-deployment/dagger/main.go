@@ -50,6 +50,8 @@ type GhDeployment struct {
 	DockerNamespace string
 	// Docker image
 	DockerImage string
+	// Project name
+	Project string
 }
 
 // CreateGitHubDeployment creates a GitHub deployment
@@ -84,6 +86,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		),
 		RequiredContexts: &[]string{}, // Skip status checks
 		Payload: map[string]interface{}{
+			"project":          ghd.Project,
 			"dockerfile":       ghd.Dockerfile,
 			"dagger_version":   ghd.DaggerVersion,
 			"dagger_checksum":  ghd.DaggerChecksum,
@@ -301,6 +304,18 @@ func (ghd *GhDeployment) WithDockerImage(
 		return ghd, errors.New("dockerImage value is required")
 	}
 	ghd.DockerImage = dockerImage
+	return ghd, nil
+}
+
+// WithProject sets the project name
+func (ghd *GhDeployment) WithProject(
+	// Project name, Required
+	project string,
+) (*GhDeployment, error) {
+	if len(project) == 0 {
+		return ghd, errors.New("project value is required")
+	}
+	ghd.Project = project
 	return ghd, nil
 }
 
