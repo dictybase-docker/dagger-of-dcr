@@ -146,10 +146,10 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 	deploymentID int,
 	// GitHub token for making API requests
 	token string,
-) (string, error) {
+) error {
 	owner, repo, err := parseOwnerRepo(cmg.Repository)
 	if err != nil {
-		return "", err
+		return err
 	}
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -162,17 +162,17 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 		int64(deploymentID),
 	)
 	if err != nil {
-		return "", fmt.Errorf(
+		return fmt.Errorf(
 			"error in getting deployment information: %s",
 			err,
 		)
 	}
 	var pload Payload
 	if err := json.Unmarshal(deployment.Payload, &pload); err != nil {
-		return "", fmt.Errorf("error in decoding payload %s", err)
+		return fmt.Errorf("error in decoding payload %s", err)
 	}
 	if pload.Repository != cmg.Repository {
-		return "", fmt.Errorf(
+		return fmt.Errorf(
 			"payload repo %s and given repo %s does not match",
 			pload.Repository,
 			cmg.Repository,
@@ -198,9 +198,9 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 		),
 	)
 	if err != nil {
-		return "", fmt.Errorf("error in publishing docker container %s", err)
+		return fmt.Errorf("error in publishing docker container %s", err)
 	}
-	return pload.DockerImageTag, nil
+	return nil
 }
 
 // FakePublishFromRepo publishes a container image to a temporary repository with a time-to-live of 10 minutes.
