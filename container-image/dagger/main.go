@@ -135,6 +135,7 @@ func (cmg *ContainerImage) PublishFromRepo(
 }
 
 // PublishFromRepoWithDeploymentID publishes a container image to Docker Hub
+// using deployment information from a specified GitHub deployment ID.
 func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 	ctx context.Context,
 	// dockerhub user name
