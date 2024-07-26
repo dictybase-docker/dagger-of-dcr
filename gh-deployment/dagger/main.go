@@ -22,26 +22,12 @@ type GhDeployment struct {
 	Repository string
 	// Git reference, for example, "refs/heads/main"
 	Ref string
-	// Dagger version, for example, "v0.11.6"
-	DaggerVersion string
-	// Dagger checksum
-	DaggerChecksum string
-	// Cluster name
-	Cluster string
-	// Storage name
-	Storage string
-	// Kube config file path
-	KubeConfig string
-	// Artifact name
-	Artifact string
 	// Docker Image tag
 	DockerImageTag string
 	// Application name
 	Application string
 	// Stack name
 	Stack string
-	// Run ID
-	RunId int
 	// Environment name, default is "development"
 	Environment string
 	// Dockerfile path
@@ -88,18 +74,11 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 		Payload: map[string]interface{}{
 			"project":          ghd.Project,
 			"dockerfile":       ghd.Dockerfile,
-			"dagger_version":   ghd.DaggerVersion,
-			"dagger_checksum":  ghd.DaggerChecksum,
-			"cluster":          ghd.Cluster,
-			"storage":          ghd.Storage,
-			"kube_config":      ghd.KubeConfig,
-			"artifact":         ghd.Artifact,
-			"docker_image":     ghd.DockerImageTag,
+			"docker_image":     ghd.DockerImage,
 			"docker_image_tag": ghd.DockerImageTag,
 			"docker_namespace": ghd.DockerNamespace,
 			"application":      ghd.Application,
 			"stack":            ghd.Stack,
-			"run_id":           ghd.RunId,
 			"repository":       ghd.Repository,
 		},
 	}
@@ -144,78 +123,6 @@ func (ghd *GhDeployment) WithRef(
 	return ghd, nil
 }
 
-// WithDaggerVersion sets the Dagger version
-func (ghd *GhDeployment) WithDaggerVersion(
-	// Dagger version, for example, "v0.11.6", Required
-	daggerVersion string,
-) (*GhDeployment, error) {
-	if len(daggerVersion) == 0 {
-		return ghd, errors.New("daggerVersion value is required")
-	}
-	ghd.DaggerVersion = daggerVersion
-	return ghd, nil
-}
-
-// WithDaggerChecksum sets the Dagger checksum
-func (ghd *GhDeployment) WithDaggerChecksum(
-	// Dagger checksum, Required
-	daggerChecksum string,
-) (*GhDeployment, error) {
-	if len(daggerChecksum) == 0 {
-		return ghd, errors.New("daggerChecksum value is required")
-	}
-	ghd.DaggerChecksum = daggerChecksum
-	return ghd, nil
-}
-
-// WithCluster sets the cluster
-func (ghd *GhDeployment) WithCluster(
-	// Cluster, Required
-	cluster string,
-) (*GhDeployment, error) {
-	if len(cluster) == 0 {
-		return ghd, errors.New("cluster value is required")
-	}
-	ghd.Cluster = cluster
-	return ghd, nil
-}
-
-// WithStorage sets the storage
-func (ghd *GhDeployment) WithStorage(
-	// Storage, Required
-	storage string,
-) (*GhDeployment, error) {
-	if len(storage) == 0 {
-		return ghd, errors.New("storage value is required")
-	}
-	ghd.Storage = storage
-	return ghd, nil
-}
-
-// WithKubeConfig sets the kube config
-func (ghd *GhDeployment) WithKubeConfig(
-	// Kube config, Required
-	kubeConfig string,
-) (*GhDeployment, error) {
-	if len(kubeConfig) == 0 {
-		return ghd, errors.New("kubeConfig value is required")
-	}
-	ghd.KubeConfig = kubeConfig
-	return ghd, nil
-}
-
-// WithArtifact sets the artifact
-func (ghd *GhDeployment) WithArtifact(
-	// Artifact, Required
-	artifact string,
-) (*GhDeployment, error) {
-	if len(artifact) == 0 {
-		return ghd, errors.New("artifact value is required")
-	}
-	ghd.Artifact = artifact
-	return ghd, nil
-}
-
 // WithImageTag sets the docker image tag
 func (ghd *GhDeployment) WithImageTag(
 	// Image tag, optional
@@ -246,18 +153,6 @@ func (ghd *GhDeployment) WithStack(
 		return ghd, errors.New("stack value is required")
 	}
 	ghd.Stack = stack
-	return ghd, nil
-}
-
-// WithRunId sets the run ID
-func (ghd *GhDeployment) WithRunId(
-	// Run ID, Required
-	runId int,
-) (*GhDeployment, error) {
-	if runId == 0 {
-		return ghd, errors.New("runId value is required")
-	}
-	ghd.RunId = runId
 	return ghd, nil
 }
 
