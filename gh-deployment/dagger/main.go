@@ -241,6 +241,37 @@ func (ghd *GhDeployment) GenerateImageTag(
 	return nil
 }
 
+// SetDeploymentStatus sets the deployment status using the GitHub API
+func (ghd *GhDeployment) SetDeploymentStatus(
+	ctx context.Context,
+	// Deployment ID, Required
+	deploymentID int,
+	// Status, Required
+	status string,
+	// Github token for making api requests, Required
+	token string,
+) error {
+	owner, repo, err := parseOwnerRepo(ghd.Repository)
+	if err != nil {
+		return err
+	}
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		ctx,
+		owner,
+		repo,
+		int64(deploymentID),
+		&github.DeploymentStatusRequest{State: github.String(status)},
+	)
+	if err != nil {
+		return fmt.Errorf("error in setting deployment status: %s", err)
+	}
+	return nil
+}
+
 func (ghd *GhDeployment) generateDefaultTag(
 	ctx context.Context,
 	source *Directory,
