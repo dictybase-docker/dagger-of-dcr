@@ -45,8 +45,8 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 	ctx context.Context,
 	// Github token for making api requests
 	token string,
-) (int, error) {
-	var dplId int
+) (int64, error) {
+	var dplId int64
 
 	owner, repo, err := parseOwnerRepo(ghd.Repository)
 	if err != nil {
@@ -96,7 +96,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 	if err != nil {
 		return dplId, fmt.Errorf("error in creating deployment %s", err)
 	}
-	return int(dpl.GetID()), nil
+	return dpl.GetID(), nil
 }
 
 // WithRepository sets the GitHub repository name
