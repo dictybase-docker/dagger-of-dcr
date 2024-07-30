@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v63/github"
@@ -245,7 +246,7 @@ func (ghd *GhDeployment) GenerateImageTag(
 func (ghd *GhDeployment) SetDeploymentStatus(
 	ctx context.Context,
 	// Deployment ID, Required
-	deploymentID int,
+	deploymentID string,
 	// Status, Required
 	status string,
 	// Github token for making api requests, Required
@@ -255,6 +256,10 @@ func (ghd *GhDeployment) SetDeploymentStatus(
 	if err != nil {
 		return err
 	}
+	depId, err := strconv.ParseInt(deploymentID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("error in converting string to int64 %s", err)
+	}
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -263,7 +268,7 @@ func (ghd *GhDeployment) SetDeploymentStatus(
 		ctx,
 		owner,
 		repo,
-		int64(deploymentID),
+		depId,
 		&github.DeploymentStatusRequest{State: github.String(status)},
 	)
 	if err != nil {
