@@ -12,6 +12,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const (
+	githubURL = "https://github.com"
+)
+
 var (
 	shaRe    = regexp.MustCompile("^[0-9a-f]{7,40}$")
 	semverRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
@@ -185,7 +189,7 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 	}
 	source := dag.Gitter().
 		WithRef(deployment.GetRef()).
-		WithRepository(pload.Repository).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
 		Checkout()
 	_, err = dag.Container().
 		Build(source, ContainerBuildOpts{Dockerfile: pload.Dockerfile}).
