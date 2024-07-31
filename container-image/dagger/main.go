@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v63/github"
@@ -143,13 +144,17 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 	// dockerhub password, use an api token
 	password string,
 	// deployment ID
-	deploymentID int,
+	deploymentID string,
 	// GitHub token for making API requests
 	token string,
 ) error {
 	owner, repo, err := parseOwnerRepo(cmg.Repository)
 	if err != nil {
 		return err
+	}
+	depId, err := strconv.ParseInt(deploymentID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("error in converting string to int64 %s", err)
 	}
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -159,7 +164,7 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 		ctx,
 		owner,
 		repo,
-		int64(deploymentID),
+		depId,
 	)
 	if err != nil {
 		return fmt.Errorf(

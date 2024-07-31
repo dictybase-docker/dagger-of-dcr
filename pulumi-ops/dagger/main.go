@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v63/github"
@@ -175,7 +176,7 @@ func (pmo *PulumiOps) DeployApp(
 func (pmo *PulumiOps) DeployBackendThroughGithub(
 	ctx context.Context,
 	// Deployment ID, Required
-	deploymentID int,
+	deploymentID string,
 	// GitHub token for making API requests, Required
 	token string,
 ) (string, error) {
@@ -183,6 +184,13 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 	owner, repo, err := parseOwnerRepo(pmo.Repository)
 	if err != nil {
 		return emptyStr, err
+	}
+	depId, err := strconv.ParseInt(deploymentID, 10, 64)
+	if err != nil {
+		return emptyStr, fmt.Errorf(
+			"error in converting string to int64 %s",
+			err,
+		)
 	}
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -192,7 +200,7 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 		ctx,
 		owner,
 		repo,
-		int64(deploymentID),
+		depId,
 	)
 	if err != nil {
 		return emptyStr, fmt.Errorf(
