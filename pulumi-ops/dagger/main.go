@@ -221,8 +221,8 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 		)
 	}
 	opsDir := dag.Gitter().
-		WithRef(deployment.GetRef()).
-		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
+		WithRef(pulumiOpsBranch).
+		WithRepository(pulumiOpsRepo).
 		Checkout()
 	return pmo.WithKubeConfig(ctx, pmo.KubeConfig).
 		KubeAccess(ctx).
