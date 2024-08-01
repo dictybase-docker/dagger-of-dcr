@@ -83,7 +83,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 			"application":      ghd.Application,
 			"stack":            ghd.Stack,
 			"repository":       ghd.Repository,
-			"kubectl_file":     ghd.KubectlFile,
+			"kubectl_config":   ghd.KubectlFile,
 		},
 	}
 

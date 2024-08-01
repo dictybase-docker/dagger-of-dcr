@@ -23,7 +23,7 @@ type Payload struct {
 	DaggerChecksum  string `json:"dagger_checksum"`
 	Cluster         string `json:"cluster"`
 	Storage         string `json:"storage"`
-	KubeConfig      string `json:"kube_config"`
+	KubeConfig      string `json:"kubectl_config"`
 	Artifact        string `json:"artifact"`
 	DockerImage     string `json:"docker_image"`
 	DockerImageTag  string `json:"docker_image_tag"`
