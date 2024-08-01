@@ -39,6 +39,8 @@ type GhDeployment struct {
 	DockerImage string
 	// Project name
 	Project string
+	// Kubectl file path
+	KubectlFile string // New public attribute
 }
 
 // CreateGitHubDeployment creates a GitHub deployment
@@ -81,6 +83,7 @@ func (ghd *GhDeployment) CreateGithubDeployment(
 			"application":      ghd.Application,
 			"stack":            ghd.Stack,
 			"repository":       ghd.Repository,
+			"kubectl_file":     ghd.KubectlFile,
 		},
 	}
 
@@ -212,6 +215,18 @@ func (ghd *GhDeployment) WithProject(
 		return ghd, errors.New("project value is required")
 	}
 	ghd.Project = project
+	return ghd, nil
+}
+
+// WithKubectlFile sets the kubectl file path
+func (ghd *GhDeployment) WithKubectlFile(
+	// Kubectl file path, Required
+	kubectlFile string,
+) (*GhDeployment, error) {
+	if len(kubectlFile) == 0 {
+		return ghd, errors.New("kubectlFile value is required")
+	}
+	ghd.KubectlFile = kubectlFile
 	return ghd, nil
 }
 
