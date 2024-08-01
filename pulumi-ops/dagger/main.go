@@ -224,7 +224,7 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 		WithRef(deployment.GetRef()).
 		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
 		Checkout()
-	return pmo.WithKubeConfig(ctx, dag.Container().File(pload.KubeConfig)).
+	return pmo.WithKubeConfig(ctx, pmo.KubeConfig).
 		KubeAccess(ctx).
 		WithMountedDirectory("/mnt", opsDir).
 		WithWorkdir("/mnt").
