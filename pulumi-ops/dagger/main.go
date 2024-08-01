@@ -14,6 +14,7 @@ import (
 const (
 	pulumiOpsRepo   = "https://github.com/dictybase-docker/cluster-ops.git"
 	pulumiOpsBranch = "master"
+	githubURL       = "https://github.com"
 )
 
 type Payload struct {
@@ -221,7 +222,7 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 	}
 	opsDir := dag.Gitter().
 		WithRef(deployment.GetRef()).
-		WithRepository(pload.Repository).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
 		Checkout()
 	return pmo.WithKubeConfig(ctx, dag.Container().File(pload.KubeConfig)).
 		KubeAccess(ctx).
