@@ -12,6 +12,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const (
+	githubURL = "https://github.com"
+)
+
 var (
 	shaRe    = regexp.MustCompile("^[0-9a-f]{7,40}$")
 	semverRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
@@ -235,7 +239,7 @@ func (ghd *GhDeployment) GenerateImageTag(
 ) error {
 	source := dag.Gitter().
 		WithRef(ghd.Ref).
-		WithRepository(ghd.Repository).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, ghd.Repository)).
 		Checkout()
 	var genTag string
 	switch {
