@@ -181,96 +181,33 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 	// GitHub token for making API requests, Required
 	token string,
 ) (string, error) {
-	var emptyStr string
-	owner, repo, err := parseOwnerRepo(pmo.Repository)
-	if err != nil {
-		return emptyStr, err
-	}
-	depId, err := strconv.ParseInt(deploymentID, 10, 64)
-	if err != nil {
-		return emptyStr, fmt.Errorf(
-			"error in converting string to int64 %s",
-			err,
-		)
-	}
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	client := github.NewClient(oauth2.NewClient(ctx, ts))
-	deployment, _, err := client.Repositories.GetDeployment(
+	return pmo.deployThroughGithub(
 		ctx,
-		owner,
-		repo,
-		depId,
+		deploymentID,
+		token,
+		func(container *Container, pload Payload) *Container {
+			return container.WithExec(
+				[]string{
+					"-C", pload.Project,
+					"-s", pload.Stack,
+					"config", "set",
+					fmt.Sprintf(
+						"%s.tag",
+						pload.Application,
+					), pload.DockerImageTag,
+					"--path",
+				},
+			)
+		},
 	)
-	if err != nil {
-		return emptyStr, fmt.Errorf(
-			"error in getting deployment information: %s",
-			err,
-		)
-	}
-	var pload Payload
-	if err := json.Unmarshal(deployment.Payload, &pload); err != nil {
-		return emptyStr, fmt.Errorf("error in decoding payload %s", err)
-	}
-	if pload.Repository != pmo.Repository {
-		return emptyStr, fmt.Errorf(
-			"payload repo %s and given repo %s does not match",
-			pload.Repository,
-			pmo.Repository,
-		)
-	}
-	opsDir := dag.Gitter().
-		WithRef(pulumiOpsBranch).
-		WithRepository(pulumiOpsRepo).
-		Checkout()
-	return pmo.WithKubeConfig(ctx, pmo.KubeConfig).
-		KubeAccess(ctx).
-		WithMountedDirectory("/mnt", opsDir).
-		WithWorkdir("/mnt").
-		WithExec(
-			[]string{
-				"-C", pload.Project,
-				"-s", pload.Stack,
-				"config", "set",
-				fmt.Sprintf("%s.tag", pload.Application), pload.DockerImageTag,
-				"--path",
-			},
-		).
-		WithExec(
-			[]string{
-				"-C",
-				pload.Project,
-				"-s",
-				pload.Stack,
-				"up",
-				"-y",
-				"-r",
-				"-f",
-				"--non-interactive",
-			},
-		).
-		Stdout(ctx)
 }
 
-// parseOwnerRepo splits the repository string into owner and repo
-func parseOwnerRepo(ownerRepo string) (string, string, error) {
-	parts := strings.Split(ownerRepo, "/")
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf(
-			"invalid repository format, expected 'owner/repo'",
-		)
-	}
-	return parts[0], parts[1], nil
-}
-
-// DeployFrontendToGithub deploys the frontend using a GitHub deployment ID and token.
-func (pmo *PulumiOps) DeployFrontendToGithub(
+// deployThroughGithub is a common method for deploying through GitHub
+func (pmo *PulumiOps) deployThroughGithub(
 	ctx context.Context,
-	// Deployment ID, Required
 	deploymentID string,
-	// GitHub token for making API requests, Required
 	token string,
+	setConfigFunc func(*Container, Payload) *Container,
 ) (string, error) {
 	var emptyStr string
 	owner, repo, err := parseOwnerRepo(pmo.Repository)
@@ -315,50 +252,77 @@ func (pmo *PulumiOps) DeployFrontendToGithub(
 		WithRef(pulumiOpsBranch).
 		WithRepository(pulumiOpsRepo).
 		Checkout()
-	return pmo.WithKubeConfig(ctx, pmo.KubeConfig).
+	container := pmo.WithKubeConfig(ctx, pmo.KubeConfig).
 		KubeAccess(ctx).
 		WithMountedDirectory("/mnt", opsDir).
-		WithWorkdir("/mnt").
-		WithExec(
-			[]string{
-				"-C", pload.Project,
-				"-s", pload.Stack,
-				"config", "set",
-				"frontpage.tag", pload.DockerImageTag,
-				"--path",
-			},
-		).
-		WithExec(
-			[]string{
-				"-C", pload.Project,
-				"-s", pload.Stack,
-				"config", "set",
-				"publication.tag", pload.DockerImageTag,
-				"--path",
-			},
-		).
-		WithExec(
-			[]string{
-				"-C", pload.Project,
-				"-s", pload.Stack,
-				"config", "set",
-				"stockcenter.tag", pload.DockerImageTag,
-				"--path",
-			},
-		).
-		WithExec(
-			[]string{
-				"-C",
-				pload.Project,
-				"-s",
-				pload.Stack,
-				"up",
-				"-y",
-				"-r",
-				"-f",
-				"--non-interactive",
-			},
-		).
-		Stdout(ctx)
+		WithWorkdir("/mnt")
+
+	container = setConfigFunc(container, pload)
+
+	return container.WithExec(
+		[]string{
+			"-C",
+			pload.Project,
+			"-s",
+			pload.Stack,
+			"up",
+			"-y",
+			"-r",
+			"-f",
+			"--non-interactive",
+		},
+	).Stdout(ctx)
 }
 
+// DeployFrontendThroughGithub deploys the frontend using a GitHub deployment ID and token.
+func (pmo *PulumiOps) DeployFrontendThroughGithub(
+	ctx context.Context,
+	// Deployment ID, Required
+	deploymentID string,
+	// GitHub token for making API requests, Required
+	token string,
+) (string, error) {
+	return pmo.deployThroughGithub(
+		ctx,
+		deploymentID,
+		token,
+		func(container *Container, pload Payload) *Container {
+			return container.WithExec(
+				[]string{
+					"-C", pload.Project,
+					"-s", pload.Stack,
+					"config", "set",
+					"frontpage.tag", pload.DockerImageTag,
+					"--path",
+				},
+			).WithExec(
+				[]string{
+					"-C", pload.Project,
+					"-s", pload.Stack,
+					"config", "set",
+					"publication.tag", pload.DockerImageTag,
+					"--path",
+				},
+			).WithExec(
+				[]string{
+					"-C", pload.Project,
+					"-s", pload.Stack,
+					"config", "set",
+					"stockcenter.tag", pload.DockerImageTag,
+					"--path",
+				},
+			)
+		},
+	)
+}
+
+// parseOwnerRepo splits the repository string into owner and repo
+func parseOwnerRepo(ownerRepo string) (string, string, error) {
+	parts := strings.Split(ownerRepo, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf(
+			"invalid repository format, expected 'owner/repo'",
+		)
+	}
+	return parts[0], parts[1], nil
+}
