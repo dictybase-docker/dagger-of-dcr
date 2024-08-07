@@ -173,6 +173,35 @@ func (pmo *PulumiOps) DeployApp(
 		Stdout(ctx)
 }
 
+// DeployAppThroughGithub deploys application using a GitHub deployment ID and token.
+func (pmo *PulumiOps) DeployAppThroughGithub(
+	ctx context.Context,
+	// Deployment ID, Required
+	deploymentID string,
+	// GitHub token for making API requests, Required
+	token string,
+) (string, error) {
+	return pmo.deployThroughGithub(
+		ctx,
+		deploymentID,
+		token,
+		func(container *Container, pload Payload) *Container {
+			return container.WithExec(
+				[]string{
+					"-C", pload.Project,
+					"-s", pload.Stack,
+					"config", "set",
+					fmt.Sprintf(
+						"%s.tag",
+						pload.Application,
+					), pload.DockerImageTag,
+					"--path",
+				},
+			)
+		},
+	)
+}
+
 // DeployBackendThroughGithub deploys the backend using a GitHub deployment ID and token.
 func (pmo *PulumiOps) DeployBackendThroughGithub(
 	ctx context.Context,
