@@ -153,64 +153,17 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 	// GitHub token for making API requests
 	token string,
 ) error {
-	owner, repo, err := parseOwnerRepo(cmg.Repository)
-	if err != nil {
-		return err
-	}
-	depId, err := strconv.ParseInt(deploymentID, 10, 64)
-	if err != nil {
-		return fmt.Errorf("error in converting string to int64 %s", err)
-	}
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	client := github.NewClient(oauth2.NewClient(ctx, ts))
-	deployment, _, err := client.Repositories.GetDeployment(
+	return cmg.publishFromRepoWithDeploymentIDCommon(
 		ctx,
-		owner,
-		repo,
-		depId,
+		user,
+		password,
+		deploymentID,
+		token,
+		func(source *Directory, pload Payload) *Container {
+			return dag.Container().
+				Build(source, ContainerBuildOpts{Dockerfile: pload.Dockerfile})
+		},
 	)
-	if err != nil {
-		return fmt.Errorf(
-			"error in getting deployment information: %s",
-			err,
-		)
-	}
-	var pload Payload
-	if err := json.Unmarshal(deployment.Payload, &pload); err != nil {
-		return fmt.Errorf("error in decoding payload %s", err)
-	}
-	if pload.Repository != cmg.Repository {
-		return fmt.Errorf(
-			"payload repo %s and given repo %s does not match",
-			pload.Repository,
-			cmg.Repository,
-		)
-	}
-	source := dag.Gitter().
-		WithRef(deployment.GetRef()).
-		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
-		Checkout()
-	_, err = dag.Container().
-		Build(source, ContainerBuildOpts{Dockerfile: pload.Dockerfile}).
-		WithRegistryAuth(
-			"docker.io",
-			user,
-			dag.SetSecret("docker-pass", password),
-		).Publish(
-		ctx,
-		fmt.Sprintf(
-			"%s/%s:%s",
-			pload.DockerNamespace,
-			pload.DockerImage,
-			pload.DockerImageTag,
-		),
-	)
-	if err != nil {
-		return fmt.Errorf("error in publishing docker container %s", err)
-	}
-	return nil
 }
 
 // FakePublishFromRepo publishes a container image to a temporary repository with a time-to-live of 10 minutes.
@@ -313,6 +266,33 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 	// GitHub token for making API requests
 	token string,
 ) error {
+	return cmg.publishFromRepoWithDeploymentIDCommon(
+		ctx,
+		user,
+		password,
+		deploymentID,
+		token,
+		func(source *Directory, pload Payload) *Container {
+			return dag.Container().
+				Build(source, ContainerBuildOpts{
+					Dockerfile: pload.Dockerfile,
+					BuildArgs: []BuildArg{
+						{Name: "BUILD_STATE", Value: pload.Environment},
+					},
+				})
+		},
+	)
+}
+
+// publishFromRepoWithDeploymentIDCommon is a common method for publishing container images
+func (cmg *ContainerImage) publishFromRepoWithDeploymentIDCommon(
+	ctx context.Context,
+	user string,
+	password string,
+	deploymentID string,
+	token string,
+	buildFunc func(source *Directory, pload Payload) *Container,
+) error {
 	owner, repo, err := parseOwnerRepo(cmg.Repository)
 	if err != nil {
 		return err
@@ -352,13 +332,10 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 		WithRef(deployment.GetRef()).
 		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
 		Checkout()
-	_, err = dag.Container().
-		Build(source, ContainerBuildOpts{
-			Dockerfile: pload.Dockerfile,
-			BuildArgs: []BuildArg{
-				{Name: "BUILD_STATE", Value: pload.Environment},
-			},
-		}).
+
+	container := buildFunc(source, pload)
+
+	_, err = container.
 		WithRegistryAuth(
 			"docker.io",
 			user,
@@ -377,4 +354,3 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 	}
 	return nil
 }
-
