@@ -53,6 +53,7 @@ type Payload struct {
 	Application     string `json:"application"`
 	Stack           string `json:"stack"`
 	RunId           int    `json:"run_id"`
+	Environment     string `json:"environment"`
 }
 
 // WithNamespace sets the docker namespace
@@ -298,3 +299,82 @@ func parseOwnerRepo(ownerRepo string) (string, string, error) {
 	}
 	return parts[0], parts[1], nil
 }
+
+// PublishFrontendFromRepoWithDeploymentID publishes a frontend container image to Docker Hub
+// using deployment information from a specified GitHub deployment ID.
+func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
+	ctx context.Context,
+	// dockerhub user name
+	user string,
+	// dockerhub password, use an api token
+	password string,
+	// deployment ID
+	deploymentID string,
+	// GitHub token for making API requests
+	token string,
+) error {
+	owner, repo, err := parseOwnerRepo(cmg.Repository)
+	if err != nil {
+		return err
+	}
+	depId, err := strconv.ParseInt(deploymentID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("error in converting string to int64 %s", err)
+	}
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+	deployment, _, err := client.Repositories.GetDeployment(
+		ctx,
+		owner,
+		repo,
+		depId,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error in getting deployment information: %s",
+			err,
+		)
+	}
+	var pload Payload
+	if err := json.Unmarshal(deployment.Payload, &pload); err != nil {
+		return fmt.Errorf("error in decoding payload %s", err)
+	}
+	if pload.Repository != cmg.Repository {
+		return fmt.Errorf(
+			"payload repo %s and given repo %s does not match",
+			pload.Repository,
+			cmg.Repository,
+		)
+	}
+	source := dag.Gitter().
+		WithRef(deployment.GetRef()).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
+		Checkout()
+	_, err = dag.Container().
+		Build(source, ContainerBuildOpts{
+			Dockerfile: pload.Dockerfile,
+			BuildArgs: []BuildArg{
+				{Name: "BUILD_STATE", Value: pload.Environment},
+			},
+		}).
+		WithRegistryAuth(
+			"docker.io",
+			user,
+			dag.SetSecret("docker-pass", password),
+		).Publish(
+		ctx,
+		fmt.Sprintf(
+			"%s/%s:%s",
+			pload.DockerNamespace,
+			pload.DockerImage,
+			pload.DockerImageTag,
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("error in publishing docker container %s", err)
+	}
+	return nil
+}
+
