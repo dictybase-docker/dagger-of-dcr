@@ -263,3 +263,102 @@ func parseOwnerRepo(ownerRepo string) (string, string, error) {
 	}
 	return parts[0], parts[1], nil
 }
+
+// DeployFrontendToGithub deploys the frontend using a GitHub deployment ID and token.
+func (pmo *PulumiOps) DeployFrontendToGithub(
+	ctx context.Context,
+	// Deployment ID, Required
+	deploymentID string,
+	// GitHub token for making API requests, Required
+	token string,
+) (string, error) {
+	var emptyStr string
+	owner, repo, err := parseOwnerRepo(pmo.Repository)
+	if err != nil {
+		return emptyStr, err
+	}
+	depId, err := strconv.ParseInt(deploymentID, 10, 64)
+	if err != nil {
+		return emptyStr, fmt.Errorf(
+			"error in converting string to int64 %s",
+			err,
+		)
+	}
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+	deployment, _, err := client.Repositories.GetDeployment(
+		ctx,
+		owner,
+		repo,
+		depId,
+	)
+	if err != nil {
+		return emptyStr, fmt.Errorf(
+			"error in getting deployment information: %s",
+			err,
+		)
+	}
+	var pload Payload
+	if err := json.Unmarshal(deployment.Payload, &pload); err != nil {
+		return emptyStr, fmt.Errorf("error in decoding payload %s", err)
+	}
+	if pload.Repository != pmo.Repository {
+		return emptyStr, fmt.Errorf(
+			"payload repo %s and given repo %s does not match",
+			pload.Repository,
+			pmo.Repository,
+		)
+	}
+	opsDir := dag.Gitter().
+		WithRef(pulumiOpsBranch).
+		WithRepository(pulumiOpsRepo).
+		Checkout()
+	return pmo.WithKubeConfig(ctx, pmo.KubeConfig).
+		KubeAccess(ctx).
+		WithMountedDirectory("/mnt", opsDir).
+		WithWorkdir("/mnt").
+		WithExec(
+			[]string{
+				"-C", pload.Project,
+				"-s", pload.Stack,
+				"config", "set",
+				"frontpage.tag", pload.DockerImageTag,
+				"--path",
+			},
+		).
+		WithExec(
+			[]string{
+				"-C", pload.Project,
+				"-s", pload.Stack,
+				"config", "set",
+				"publication.tag", pload.DockerImageTag,
+				"--path",
+			},
+		).
+		WithExec(
+			[]string{
+				"-C", pload.Project,
+				"-s", pload.Stack,
+				"config", "set",
+				"stockcenter.tag", pload.DockerImageTag,
+				"--path",
+			},
+		).
+		WithExec(
+			[]string{
+				"-C",
+				pload.Project,
+				"-s",
+				pload.Stack,
+				"up",
+				"-y",
+				"-r",
+				"-f",
+				"--non-interactive",
+			},
+		).
+		Stdout(ctx)
+}
+
