@@ -2,3 +2,4 @@
 .plandex
 pulumi-ops/cloud-manager.json
 pulumi-ops/pulumi-kubectl.yaml
+.env
