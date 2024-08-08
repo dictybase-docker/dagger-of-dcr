@@ -27,6 +27,10 @@ dagger_file := if os() == "macos" {
 system-info:
     @echo this is an {{arch()}} os {{os()}}
 
+check-env:
+	@echo $DOCKERFILE $DOCKER_IMAGE $DOCKER_NAMESPACE
+	@echo $REPOSITORY $ENVIRONMENT $PROJECT $STACK $APP
+
 setup: install-gha-binary install-dagger-binary
 [group('setup-tools')]
 install-gha-binary:
