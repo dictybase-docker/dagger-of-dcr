@@ -159,7 +159,7 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 		password,
 		deploymentID,
 		token,
-		func(source *Directory, pload Payload) *Container {
+		func(source *Directory, dpl *github.Deployment, pload Payload) *Container {
 			return dag.Container().
 				Build(source, ContainerBuildOpts{Dockerfile: pload.Dockerfile})
 		},
@@ -272,12 +272,12 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 		password,
 		deploymentID,
 		token,
-		func(source *Directory, pload Payload) *Container {
+		func(source *Directory, dpl *github.Deployment, pload Payload) *Container {
 			return dag.Container().
 				Build(source, ContainerBuildOpts{
 					Dockerfile: pload.Dockerfile,
 					BuildArgs: []BuildArg{
-						{Name: "BUILD_STATE", Value: pload.Environment},
+						{Name: "BUILD_STATE", Value: dpl.GetEnvironment()},
 					},
 				})
 		},
@@ -291,7 +291,7 @@ func (cmg *ContainerImage) publishFromRepoWithDeploymentIDCommon(
 	password string,
 	deploymentID string,
 	token string,
-	buildFunc func(source *Directory, pload Payload) *Container,
+	buildFunc func(source *Directory, deployment *github.Deployment, pload Payload) *Container,
 ) error {
 	owner, repo, err := parseOwnerRepo(cmg.Repository)
 	if err != nil {
@@ -333,7 +333,7 @@ func (cmg *ContainerImage) publishFromRepoWithDeploymentIDCommon(
 		WithRepository(fmt.Sprintf("%s/%s", githubURL, pload.Repository)).
 		Checkout()
 
-	container := buildFunc(source, pload)
+	container := buildFunc(source, deployment, pload)
 
 	_, err = container.
 		WithRegistryAuth(
