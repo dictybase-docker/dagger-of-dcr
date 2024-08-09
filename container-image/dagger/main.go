@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -307,29 +308,36 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 		Checkout()
 	allImages := strings.Split(pload.DockerImage, ":")
 	allDockerfiles := strings.Split(pload.Dockerfile, ":")
+	grp, ctx := errgroup.WithContext(ctx)
 	for idx, file := range allDockerfiles {
-		_, err := dag.Container().
-			Build(source, ContainerBuildOpts{
-				Dockerfile: file,
-				BuildArgs: []BuildArg{
-					{
-						Name:  "BUILD_STATE",
-						Value: deployment.GetEnvironment(),
+		grp.Go(func() error {
+			_, err := dag.Container().
+				Build(source, ContainerBuildOpts{
+					Dockerfile: file,
+					BuildArgs: []BuildArg{
+						{
+							Name:  "BUILD_STATE",
+							Value: deployment.GetEnvironment(),
+						},
 					},
-				},
-			}).
-			WithRegistryAuth("docker.io", user, dag.SetSecret("docker-pass", password)).
-			Publish(ctx, fmt.Sprintf(
-				"%s/%s:%s",
-				pload.DockerNamespace,
-				allImages[idx],
-				pload.DockerImageTag,
-			))
-		if err != nil {
-			return fmt.Errorf("error in publishing docker container %s", err)
-		}
+				}).
+				WithRegistryAuth("docker.io", user, dag.SetSecret("docker-pass", password)).
+				Publish(ctx, fmt.Sprintf(
+					"%s/%s:%s",
+					pload.DockerNamespace,
+					allImages[idx],
+					pload.DockerImageTag,
+				))
+			if err != nil {
+				return fmt.Errorf(
+					"error in publishing docker container %s",
+					err,
+				)
+			}
+			return nil
+		})
 	}
-	return nil
+	return grp.Wait()
 }
 
 // publishFromRepoWithDeploymentIDCommon is a common method for publishing container images
