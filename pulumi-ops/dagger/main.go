@@ -316,31 +316,19 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 		deploymentID,
 		token,
 		func(container *Container, pload Payload) *Container {
-			return container.WithExec(
-				[]string{
-					"-C", pload.Project,
-					"-s", pload.Stack,
-					"config", "set",
-					"frontpage.tag", pload.DockerImageTag,
-					"--path",
-				},
-			).WithExec(
-				[]string{
-					"-C", pload.Project,
-					"-s", pload.Stack,
-					"config", "set",
-					"publication.tag", pload.DockerImageTag,
-					"--path",
-				},
-			).WithExec(
-				[]string{
-					"-C", pload.Project,
-					"-s", pload.Stack,
-					"config", "set",
-					"stockcenter.tag", pload.DockerImageTag,
-					"--path",
-				},
-			)
+			execCmd := []string{
+				"-C", pload.Project,
+				"-s", pload.Stack,
+				"config", "set-all", "--path",
+			}
+			for _, app := range strings.Split(pload.Application, ":") {
+				execCmd = append(
+					execCmd,
+					"--plaintext",
+					fmt.Sprintf("%s.tag=%s", app, pload.DockerImageTag),
+				)
+			}
+			return container.WithExec(execCmd)
 		},
 	)
 }
