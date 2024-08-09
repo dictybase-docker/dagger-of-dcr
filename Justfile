@@ -154,7 +154,7 @@ deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref toke
     with-kube-config --config={{kubectl_file}} \
     with-backend --backend={{pulumi-state}} \
     with-pulumi --version={{pulumi_version}} \
-    deploy-app-through-github --token={{token}} \
+    deploy-frontend-through-github --token={{token}} \
     --deployment-id=$deployment_id
 
     # finish with successful deployment
