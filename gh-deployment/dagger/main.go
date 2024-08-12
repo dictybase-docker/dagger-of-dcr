@@ -384,3 +384,82 @@ func (ghd *GhDeployment) ListGithubDeployments(
 
 	return nil
 }
+
+// ListDeploymentsWithStatus fetches deployments and their statuses for the GitHub repository
+func (ghd *GhDeployment) ListDeploymentsWithStatus(
+	ctx context.Context,
+	// Github token for making api requests
+	token string,
+) error {
+	owner, repo, err := parseOwnerRepo(ghd.Repository)
+	if err != nil {
+		return err
+	}
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+
+	opts := &github.DeploymentsListOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	for {
+		deployments, resp, err := client.Repositories.ListDeployments(
+			ctx,
+			owner,
+			repo,
+			opts,
+		)
+		if err != nil {
+			return fmt.Errorf("error listing deployments: %v", err)
+		}
+
+		for _, d := range deployments {
+			fmt.Printf(
+				"[Deployment ID]: %d, [Description]: %s\n",
+				d.GetID(),
+				d.GetDescription(),
+			)
+
+			// Fetch deployment statuses
+			statusOpts := &github.ListOptions{PerPage: 100}
+			for {
+				statuses, statusResp, err := client.Repositories.ListDeploymentStatuses(
+					ctx,
+					owner,
+					repo,
+					d.GetID(),
+					statusOpts,
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"error listing deployment statuses: %v",
+						err,
+					)
+				}
+
+				for _, s := range statuses {
+					fmt.Printf(
+						"[Status]: %s\n",
+						s.GetState(),
+					)
+				}
+
+				if statusResp.NextPage == 0 {
+					break
+				}
+				statusOpts.Page = statusResp.NextPage
+			}
+			fmt.Println()
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return nil
+}
