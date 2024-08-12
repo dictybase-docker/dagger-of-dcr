@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -17,9 +18,17 @@ const (
 )
 
 var (
-	shaRe    = regexp.MustCompile("^[0-9a-f]{7,40}$")
-	semverRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
-	bre      = regexp.MustCompile(`^refs/heads|tags/(.+)$`)
+	shaRe            = regexp.MustCompile("^[0-9a-f]{7,40}$")
+	semverRe         = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
+	bre              = regexp.MustCompile(`^refs/heads|tags/(.+)$`)
+	statesForRemoval = []string{
+		"error",
+		"failure",
+		"inactive",
+		"in_progress",
+		"queued",
+		"pending",
+	}
 )
 
 type GhDeployment struct {
@@ -416,11 +425,11 @@ func (ghd *GhDeployment) ListDeploymentsWithStatus(
 			return fmt.Errorf("error listing deployments: %v", err)
 		}
 
-		for _, d := range deployments {
+		for _, dpl := range deployments {
 			fmt.Printf(
 				"[Deployment ID]: %d, [Description]: %s\n",
-				d.GetID(),
-				d.GetDescription(),
+				dpl.GetID(),
+				dpl.GetDescription(),
 			)
 
 			// Fetch deployment statuses
@@ -430,7 +439,7 @@ func (ghd *GhDeployment) ListDeploymentsWithStatus(
 					ctx,
 					owner,
 					repo,
-					d.GetID(),
+					dpl.GetID(),
 					statusOpts,
 				)
 				if err != nil {
@@ -440,10 +449,10 @@ func (ghd *GhDeployment) ListDeploymentsWithStatus(
 					)
 				}
 
-				for _, s := range statuses {
+				for _, dps := range statuses {
 					fmt.Printf(
 						"[Status]: %s\n",
-						s.GetState(),
+						dps.GetState(),
 					)
 				}
 
@@ -462,4 +471,108 @@ func (ghd *GhDeployment) ListDeploymentsWithStatus(
 	}
 
 	return nil
+}
+
+// RemoveUnsuccessfulDeployments removes all deployments without a success status
+func (ghd *GhDeployment) RemoveUnsuccessfulDeployments(
+	ctx context.Context,
+	// Github token for making api requests
+	token string,
+) error {
+	owner, repo, err := parseOwnerRepo(ghd.Repository)
+	if err != nil {
+		return err
+	}
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	client := github.NewClient(oauth2.NewClient(ctx, ts))
+
+	opts := &github.DeploymentsListOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+	for {
+		deployments, resp, err := client.Repositories.ListDeployments(
+			ctx,
+			owner,
+			repo,
+			opts,
+		)
+		if err != nil {
+			return fmt.Errorf("error listing deployments: %v", err)
+		}
+
+		for _, dpl := range deployments {
+			hasSuccessStatus, err := ghd.checkDeploymentStatus(
+				ctx,
+				client,
+				owner,
+				repo,
+				dpl.GetID(),
+			)
+			if err != nil {
+				return err
+			}
+			if !hasSuccessStatus {
+				_, err := client.Repositories.DeleteDeployment(
+					ctx,
+					owner,
+					repo,
+					dpl.GetID(),
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"error deleting deployment %d: %v",
+						dpl.GetID(),
+						err,
+					)
+				}
+				fmt.Printf("Removed deployment ID: %d\n", dpl.GetID())
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return nil
+}
+
+func (ghd *GhDeployment) checkDeploymentStatus(
+	ctx context.Context,
+	client *github.Client,
+	owner, repo string,
+	deploymentID int64,
+) (bool, error) {
+	statusOpts := &github.ListOptions{PerPage: 100}
+	allStatuses := make([]string, 0)
+
+	for {
+		statuses, resp, err := client.Repositories.ListDeploymentStatuses(
+			ctx, owner, repo, deploymentID, statusOpts,
+		)
+		if err != nil {
+			return false, fmt.Errorf(
+				"error listing deployment statuses: %v",
+				err,
+			)
+		}
+		for _, dps := range statuses {
+			allStatuses = append(allStatuses, dps.GetState())
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		statusOpts.Page = resp.NextPage
+	}
+	for _, state := range statesForRemoval {
+		if slices.Contains(allStatuses, state) {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
