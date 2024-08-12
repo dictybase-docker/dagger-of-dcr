@@ -18,17 +18,9 @@ const (
 )
 
 var (
-	shaRe            = regexp.MustCompile("^[0-9a-f]{7,40}$")
-	semverRe         = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
-	bre              = regexp.MustCompile(`^refs/heads|tags/(.+)$`)
-	statesForRemoval = []string{
-		"error",
-		"failure",
-		"inactive",
-		"in_progress",
-		"queued",
-		"pending",
-	}
+	shaRe    = regexp.MustCompile("^[0-9a-f]{7,40}$")
+	semverRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)$`)
+	bre      = regexp.MustCompile(`^refs/heads|tags/(.+)$`)
 )
 
 type GhDeployment struct {
@@ -568,11 +560,9 @@ func (ghd *GhDeployment) checkDeploymentStatus(
 		}
 		statusOpts.Page = resp.NextPage
 	}
-	for _, state := range statesForRemoval {
-		if slices.Contains(allStatuses, state) {
-			return false, nil
-		}
+	if slices.Contains(allStatuses, "success") {
+		return true, nil
 	}
 
-	return true, nil
+	return false, nil
 }
