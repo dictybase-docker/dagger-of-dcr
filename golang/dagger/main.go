@@ -15,7 +15,11 @@ const (
 	LINT_BASE  = "golangci/golangci-lint"
 )
 
-type Golang struct{}
+type Golang struct {
+	ArangoPassword string
+	ArangoVersion  string
+	ArangoPort     int
+}
 
 // Runs golang tests
 func (gom *Golang) Test(
@@ -104,4 +108,33 @@ func fetchAndValidateEnvVars(envVar string) (string, error) {
 		return "", fmt.Errorf("value of %s env variable is not set", envVar)
 	}
 	return value, nil
+}
+func (gom *Golang) WithArangoPassword(
+	// The root password for the ArangoDB instance
+	// +optional
+	// +default="golam"
+	password string,
+) *Golang {
+	gom.ArangoPassword = password
+	return gom
+}
+
+func (gom *Golang) WithArangoVersion(
+	// The version of ArangoDB to use
+	// +optional
+	// +default="3.10.9"
+	version string,
+) *Golang {
+	gom.ArangoVersion = version
+	return gom
+}
+
+func (gom *Golang) WithArangoPort(
+	// The port to expose ArangoDB on
+	// +optional
+	// +default=8529
+	port int,
+) *Golang {
+	gom.ArangoPort = port
+	return gom
 }
