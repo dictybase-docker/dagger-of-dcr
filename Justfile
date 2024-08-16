@@ -1,6 +1,7 @@
 set dotenv-required
 dagger_version := "v0.11.9"
 pulumi_version := "3.108.0"
+kops_version := "1.27.1"
 kops_module := "kops"
 gh_deployment_module := "gh-deployment"
 container_module := "container-image"
@@ -44,7 +45,7 @@ export-kubectl cluster cluster-state gcp-credentials-file: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops with-kubectl \
+    with-kops --version={{kops_version}} with-kubectl \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
@@ -77,7 +78,7 @@ deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token
 
     # generate kubectl file
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops with-kubectl \
+    with-kops --version={{kops_version}} with-kubectl \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
@@ -134,7 +135,7 @@ deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref toke
 
     # generate kubectl file
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops with-kubectl \
+    with-kops --version={{kops_version}} with-kubectl \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
