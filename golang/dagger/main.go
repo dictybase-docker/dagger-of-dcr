@@ -25,15 +25,6 @@ type Golang struct {
 // Test runs Go tests in a containerized environment.
 // It sets up a Wolfi-based container with the specified Go version,
 // prepares the workspace, and executes the tests.
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - src: The source directory to test (required).
-//   - args: Optional slice of strings representing additional arguments to the go test command.
-//
-// Returns:
-//   - A string containing the stdout of the test execution.
-//   - An error if any step in the process fails.
 func (gom *Golang) Test(
 	ctx context.Context,
 	// The source directory to test, Required.
@@ -54,16 +45,6 @@ func (gom *Golang) Test(
 
 // Lint runs golangci-lint on the Go source code in a containerized environment.
 // It uses a specified version of golangci-lint to perform static code analysis.
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - version: Optional string specifying the version of golangci-lint to use (default: "v1.55.2-alpine").
-//   - src: The source directory to lint (required).
-//   - args: Optional slice of strings representing additional arguments to the golangci-lint command.
-//
-// Returns:
-//   - A string containing the stdout of the linting process.
-//   - An error if any step in the process fails.
 func (gom *Golang) Lint(
 	ctx context.Context,
 	// An optional string specifying the version of golangci-lint to use
@@ -85,7 +66,6 @@ func (gom *Golang) Lint(
 	).Stdout(ctx)
 }
 
-
 func fetchAndValidateEnvVars(envVar string) (string, error) {
 	value := os.Getenv(envVar)
 	if len(value) == 0 {
@@ -97,15 +77,6 @@ func fetchAndValidateEnvVars(envVar string) (string, error) {
 // TestsWithArangoDB runs Go tests in a containerized environment with an ArangoDB service.
 // It sets up an ArangoDB service, prepares a Wolfi-based container with the specified Go version,
 // and executes the tests with the ArangoDB service available.
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - src: The source directory to test (required).
-//   - args: Optional slice of strings representing additional arguments to the go test command.
-//
-// Returns:
-//   - A string containing the stdout of the test execution.
-//   - An error if any step in the process fails.
 func (gom *Golang) TestsWithArangoDB(
 	ctx context.Context,
 	// The source directory to test, Required.
@@ -143,12 +114,6 @@ func (gom *Golang) TestsWithArangoDB(
 }
 
 // WithArangoPassword sets the root password for the ArangoDB instance.
-//
-// Parameter:
-//   - password: The root password for the ArangoDB instance (optional, default: "golam").
-//
-// Returns:
-//   - A pointer to the modified Golang struct.
 func (gom *Golang) WithArangoPassword(
 	// The root password for the ArangoDB instance
 	// +optional
@@ -160,12 +125,6 @@ func (gom *Golang) WithArangoPassword(
 }
 
 // WithArangoVersion sets the version of ArangoDB to use.
-//
-// Parameter:
-//   - version: The version of ArangoDB to use (optional, default: "3.10.9").
-//
-// Returns:
-//   - A pointer to the modified Golang struct.
 func (gom *Golang) WithArangoVersion(
 	// The version of ArangoDB to use
 	// +optional
@@ -177,12 +136,6 @@ func (gom *Golang) WithArangoVersion(
 }
 
 // WithArangoPort sets the port to expose ArangoDB on.
-//
-// Parameter:
-//   - port: The port to expose ArangoDB on (optional, default: 8529).
-//
-// Returns:
-//   - A pointer to the modified Golang struct.
 func (gom *Golang) WithArangoPort(
 	// The port to expose ArangoDB on
 	// +optional
@@ -194,12 +147,6 @@ func (gom *Golang) WithArangoPort(
 }
 
 // WithGolangVersion sets the version of Golang to use.
-//
-// Parameter:
-//   - version: The version of Golang to use (optional, default: "go-1.21").
-//
-// Returns:
-//   - A pointer to the modified Golang struct.
 func (gom *Golang) WithGolangVersion(
 	// The version of Golang to use
 	// +optional
