@@ -86,7 +86,7 @@ func (gom *Golang) TestsWithArangoDB(
 	args []string,
 ) (string, error) {
 	arangoService := dag.Container().
-		From(gom.ArangoVersion).
+		From(fmt.Sprintf("%s:%s", "arangodb", gom.ArangoVersion)).
 		WithEnvVariable("ARANGO_ROOT_PASSWORD", gom.ArangoPassword).
 		WithExposedPort(gom.ArangoPort).
 		AsService()
