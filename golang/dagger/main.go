@@ -85,55 +85,6 @@ func (gom *Golang) Lint(
 	).Stdout(ctx)
 }
 
-// Publish builds and pushes a Docker image to a Docker registry.
-// It uses the provided Docker context and Dockerfile to build the image,
-// then pushes it to the specified Docker registry.
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - src: The source directory where the Docker context is located (optional, default: ".").
-//   - namespace: The Docker namespace under which the image will be pushed (optional, default: "dictybase").
-//   - dockerFile: The path to the Dockerfile (optional, default: "build/package/Dockerfile").
-//   - image: The name of the image to be built (required).
-//   - imageTag: The tag of the image to be built (required).
-//
-// Returns:
-//   - A string containing the result of the publish operation.
-//   - An error if any step in the process fails.
-func (gom *Golang) Publish(
-	ctx context.Context,
-	// specifies the source directory where the Docker context is located
-	// +optional
-	// +default="."
-	src string,
-	// the docker namespace under which the image will be pushed
-	// +optional
-	// +default="dictybase"
-	namespace string,
-	// specifies the path to the Dockerfile
-	// +optional
-	// +default="build/package/Dockerfile"
-	dockerFile string,
-	// name of the image to be built, Required
-	image string,
-	// tag of the image to be built, Required
-	imageTag string,
-) (string, error) {
-	var empty string
-	userValue, err := fetchAndValidateEnvVars("DOCKERHUB_USER")
-	if err != nil {
-		return empty, err
-	}
-	passValue, err := fetchAndValidateEnvVars("DOCKER_PASS")
-	if err != nil {
-		return empty, nil
-	}
-	return F.Pipe2(
-		dag.Container(),
-		setupBuild(src, dockerFile),
-		dockerHubAuth(userValue, dag.SetSecret("docker-pass", passValue)),
-	).Publish(ctx, fmt.Sprintf("%s/%s:%s", namespace, image, imageTag))
-}
 
 func fetchAndValidateEnvVars(envVar string) (string, error) {
 	value := os.Getenv(envVar)
