@@ -19,6 +19,7 @@ type Golang struct {
 	ArangoPassword string
 	ArangoVersion  string
 	ArangoPort     int
+	GolangVersion  string
 }
 
 // Runs golang tests
@@ -136,5 +137,14 @@ func (gom *Golang) WithArangoPort(
 	port int,
 ) *Golang {
 	gom.ArangoPort = port
+	return gom
+}
+func (gom *Golang) WithGolangVersion(
+	// The version of Golang to use
+	// +optional
+	// +default="go-1.21"
+	version string,
+) *Golang {
+	gom.GolangVersion = version
 	return gom
 }
