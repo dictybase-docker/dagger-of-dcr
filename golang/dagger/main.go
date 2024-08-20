@@ -13,6 +13,7 @@ const (
 	PROJ_MOUNT = "/app"
 	WOLFI_BASE = "cgr.dev/chainguard/wolfi-base"
 	LINT_BASE  = "golangci/golangci-lint"
+	githubURL  = "https://github.com"
 )
 
 type Golang struct {
@@ -122,6 +123,25 @@ func (gom *Golang) WithArangoPassword(
 ) *Golang {
 	gom.ArangoPassword = password
 	return gom
+}
+
+// TestsWithArangoDBFromGithub fetches a GitHub repository and runs Go tests with ArangoDB.
+func (gom *Golang) TestsWithArangoDBFromGithub(
+	ctx context.Context,
+	// The GitHub repository name (e.g., "username/repo")
+	repository string,
+	// The git reference (branch, tag, or commit) to clone and test
+	gitRef string,
+	// An optional slice of strings representing additional arguments to the go test command
+	// +optional
+	args []string,
+) (string, error) {
+	source := dag.Gitter().
+		WithRef(gitRef).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, repository)).
+		Checkout()
+	// Call TestsWithArangoDB with the fetched directory
+	return gom.TestsWithArangoDB(ctx, source, args)
 }
 
 // WithArangoVersion sets the version of ArangoDB to use.
