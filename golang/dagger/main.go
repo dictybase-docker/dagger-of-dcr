@@ -99,13 +99,13 @@ func (gom *Golang) TestsWithArangoDB(
 		)
 	}
 
-	return dag.Container().From(WOLFI_BASE).
+	return dag.Container().
+		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
 		WithServiceBinding("arango", arangoService).
 		WithEnvVariable("ARANGO_HOST", arangoHost).
 		WithEnvVariable("ARANGO_PASS", gom.ArangoPassword).
 		WithEnvVariable("ARANGO_USER", "root").
 		WithExec([]string{"apk", "update"}).
-		WithExec([]string{"apk", "add", gom.GolangVersion}).
 		WithMountedDirectory(PROJ_MOUNT, src).
 		WithWorkdir(PROJ_MOUNT).
 		WithExec([]string{"go", "mod", "download"}).
