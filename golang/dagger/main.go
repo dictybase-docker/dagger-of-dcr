@@ -23,9 +23,7 @@ type Golang struct {
 	GolangVersion  string
 }
 
-// Test runs Go tests in a containerized environment.
-// It sets up a Wolfi-based container with the specified Go version,
-// prepares the workspace, and executes the tests.
+// Test runs Go tests
 func (gom *Golang) Test(
 	ctx context.Context,
 	// The source directory to test, Required.
@@ -34,14 +32,14 @@ func (gom *Golang) Test(
 	// +optional
 	args []string,
 ) (string, error) {
-	return F.Pipe5(
-		dag.Container(),
-		base(WOLFI_BASE),
-		wolfiWithGoInstall(gom.GolangVersion),
-		prepareWorkspace(src, PROJ_MOUNT),
-		modCache,
-		goTestRunner(args),
-	).Stdout(ctx)
+	return dag.Container().
+		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
+		WithExec([]string{"apk", "update"}).
+		WithMountedDirectory(PROJ_MOUNT, src).
+		WithWorkdir(PROJ_MOUNT).
+		WithExec([]string{"go", "mod", "download"}).
+		WithExec(append([]string{"go", "test", "-v", "./..."}, args...)).
+		Stdout(ctx)
 }
 
 // Lint runs golangci-lint on the Go source code in a containerized environment.
