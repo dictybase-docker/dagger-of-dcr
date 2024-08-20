@@ -150,7 +150,7 @@ func (gom *Golang) WithArangoPort(
 func (gom *Golang) WithGolangVersion(
 	// The version of Golang to use
 	// +optional
-	// +default="go-1.21"
+	// +default="1.22.6"
 	version string,
 ) *Golang {
 	gom.GolangVersion = version
