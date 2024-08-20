@@ -1,6 +1,12 @@
 {
   "name": "golang",
   "sdk": "go",
+  "dependencies": [
+    {
+      "name": "gitter",
+      "source": "../gitter"
+    }
+  ],
   "source": "dagger",
   "engineVersion": "v0.11.9"
 }
