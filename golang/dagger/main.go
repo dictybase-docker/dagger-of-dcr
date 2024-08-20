@@ -75,9 +75,7 @@ func fetchAndValidateEnvVars(envVar string) (string, error) {
 	return value, nil
 }
 
-// TestsWithArangoDB runs Go tests in a containerized environment with an ArangoDB service.
-// It sets up an ArangoDB service, prepares a Wolfi-based container with the specified Go version,
-// and executes the tests with the ArangoDB service available.
+// TestsWithArangoDB runs Go tests in a container with an ArangoDB.
 func (gom *Golang) TestsWithArangoDB(
 	ctx context.Context,
 	// The source directory to test, Required.
