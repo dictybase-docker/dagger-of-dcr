@@ -61,3 +61,22 @@ func (gom *Golang) TestsWithRedis(
 		}, args...)).
 		Stdout(ctx)
 }
+
+// TestsWithRedisFromGithub fetches a GitHub repository and runs Go tests with ArangoDB.
+func (gom *Golang) TestsWithRedisFromGithub(
+	ctx context.Context,
+	// The GitHub repository name (e.g., "username/repo")
+	repository string,
+	// The git reference (branch, tag, or commit) to clone and test
+	gitRef string,
+	// An optional slice of strings representing additional arguments to the go test command
+	// +optional
+	args []string,
+) (string, error) {
+	source := dag.Gitter().
+		WithRef(gitRef).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, repository)).
+		Checkout()
+	// Call TestsWithArangoDB with the fetched directory
+	return gom.TestsWithRedis(ctx, source, args)
+}
