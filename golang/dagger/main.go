@@ -21,6 +21,11 @@ type Golang struct {
 	ArangoVersion  string
 	ArangoPort     int
 	GolangVersion  string
+	ArangoPassword     string
+	ArangoVersion      string
+	ArangoPort         int
+	GolangVersion      string
+	GotestSumFormatter string
 }
 
 // Test runs Go tests
@@ -172,6 +177,18 @@ func (gom *Golang) WithGolangVersion(
 	gom.GolangVersion = version
 	return gom
 }
+
+// WithGotestSumFormatter sets the output formatter for gotestsum
+func (gom *Golang) WithGotestSumFormatter(
+	// The output formatter to use for gotestsum
+	// +optional
+	// +default="pkgname"
+	formatter string,
+) *Golang {
+	gom.GotestSumFormatter = formatter
+	return gom
+}
+
 // PrepareTestContainer creates a container with Golang and installs gotestsum and gotestdox
 func (gom *Golang) PrepareTestContainer(
 	ctx context.Context,
