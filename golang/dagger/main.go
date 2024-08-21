@@ -17,10 +17,6 @@ const (
 )
 
 type Golang struct {
-	ArangoPassword string
-	ArangoVersion  string
-	ArangoPort     int
-	GolangVersion  string
 	ArangoPassword     string
 	ArangoVersion      string
 	ArangoPort         int
@@ -101,17 +97,17 @@ func (gom *Golang) TestsWithArangoDB(
 		)
 	}
 
-	return dag.Container().
-		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
+	return gom.PrepareTestContainer(ctx).
 		WithServiceBinding("arango", arangoService).
 		WithEnvVariable("ARANGO_HOST", arangoHost).
 		WithEnvVariable("ARANGO_PASS", gom.ArangoPassword).
 		WithEnvVariable("ARANGO_USER", "root").
-		WithExec([]string{"apk", "update"}).
 		WithMountedDirectory(PROJ_MOUNT, src).
 		WithWorkdir(PROJ_MOUNT).
 		WithExec([]string{"go", "mod", "download"}).
-		WithExec(append([]string{"go", "test", "-v", "./..."}, args...)).
+		WithExec(append([]string{
+			"gotestsum", "--format", gom.GotestSumFormatter, "--",
+		}, args...)).
 		Stdout(ctx)
 }
 
