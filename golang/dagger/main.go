@@ -172,3 +172,13 @@ func (gom *Golang) WithGolangVersion(
 	gom.GolangVersion = version
 	return gom
 }
+// PrepareTestContainer creates a container with Golang and installs gotestsum and gotestdox
+func (gom *Golang) PrepareTestContainer(
+	ctx context.Context,
+) *Container {
+	return dag.Container().
+		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
+		WithExec([]string{"apk", "add", "--no-cache", "git"}).
+		WithExec([]string{"go", "install", "gotest.tools/gotestsum@latest"}).
+		WithExec([]string{"go", "install", "github.com/bitfield/gotestdox/cmd/gotestdox@latest"})
+}
