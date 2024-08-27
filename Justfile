@@ -1,4 +1,4 @@
-set dotenv-required
+set dotenv-load
 dagger_version := "v0.11.9"
 pulumi_version := "3.108.0"
 kops_version := "1.27.1"
