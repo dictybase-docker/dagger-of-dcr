@@ -166,7 +166,7 @@ deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref toke
     --deployment-id=$deployment_id \
     --status="success"
 
-build-publish-image repository ref user pass namespace image: setup 
+build-publish-image repository ref user pass namespace image dockerfile: setup 
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -174,6 +174,7 @@ build-publish-image repository ref user pass namespace image: setup
     with-ref --ref={{ref}} \
     with-namespace --namespace={{namespace}} \
     with-image --image={{image}} \
+    with-dockerfile --docker-file={{dockerfile}} \
     with-repository --repository=${{repository}} \
     publish-from-repo \
     --user={{user}} --password={{pass}} 
