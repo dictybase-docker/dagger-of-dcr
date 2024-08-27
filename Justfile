@@ -51,6 +51,7 @@ export-kubectl cluster cluster-state gcp-credentials-file: setup
     with-cluster --name={{cluster}} \
     export-kubectl --output={{kubectl_file}}
 
+
 deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
     #!/usr/bin/env bash
     set -euxo pipefail
@@ -165,3 +166,14 @@ deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref toke
     --deployment-id=$deployment_id \
     --status="success"
 
+build-publish-image repository ref user pass namespace image: setup 
+    #!/usr/bin/env bash
+    set -euxo pipefail
+
+    {{dagger_bin}} call -m {{container_module}} \
+    with-ref --ref={{ref}} \
+    with-namespace --namespace={{namespace}} \
+    with-image --image={{image}} \
+    with-repository --repository=${{repository}} \
+    publish-from-repo \
+    --user={{user}} --password={{pass}} 
