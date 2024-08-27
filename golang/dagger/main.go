@@ -36,13 +36,15 @@ func (gom *Golang) Test(
 	// +optional
 	args []string,
 ) (string, error) {
-	return dag.Container().
-		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
-		WithExec([]string{"apk", "update"}).
+	return gom.PrepareTestContainer(ctx).
 		WithMountedDirectory(PROJ_MOUNT, src).
 		WithWorkdir(PROJ_MOUNT).
 		WithExec([]string{"go", "mod", "download"}).
-		WithExec(append([]string{"go", "test", "-v", "./..."}, args...)).
+		WithExec(append([]string{
+			"gotestsum",
+			"--format-hide-empty-pkg",
+			"--format", gom.GotestSumFormatter, "--",
+		}, args...)).
 		Stdout(ctx)
 }
 
