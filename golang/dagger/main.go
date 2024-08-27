@@ -111,3 +111,21 @@ func (gom *Golang) PrepareTestContainer(
 		WithExec([]string{"go", "install", "gotest.tools/gotestsum@latest"}).
 		WithExec([]string{"go", "install", "github.com/bitfield/gotestdox/cmd/gotestdox@latest"})
 }
+
+// TestGitHub runs Go tests on a GitHub repository
+func (gom *Golang) TestGitHub(
+	ctx context.Context,
+	// The GitHub repository name (e.g., "username/repo")
+	repository string,
+	// The git reference (branch, tag, or commit) to clone and test
+	gitRef string,
+	// An optional slice of strings representing additional arguments to the go test command
+	// +optional
+	args []string,
+) (string, error) {
+	source := dag.Gitter().
+		WithRef(gitRef).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, repository)).
+		Checkout()
+	return gom.Test(ctx, source, args)
+}
