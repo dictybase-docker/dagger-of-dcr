@@ -175,6 +175,6 @@ build-publish-image repository ref user pass namespace image dockerfile: setup
     with-namespace --namespace={{namespace}} \
     with-image --image={{image}} \
     with-dockerfile --docker-file={{dockerfile}} \
-    with-repository --repository=${{repository}} \
+    with-repository --repository={{repository}} \
     publish-from-repo \
     --user={{user}} --password={{pass}} 
