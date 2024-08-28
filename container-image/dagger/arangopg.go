@@ -38,7 +38,7 @@ func (cmg *ContainerImage) BuildAndPublishArangoPostgresContainer(
 		)
 	}
 
-	tag := fmt.Sprintf("%s/%s:%s", cmg.Namespace, cmg.Image, cmg.DockerImageTag)
+	tag := fmt.Sprintf("%s/%s:%s", cmg.Namespace, cmg.Image, cmg.Ref)
 	_, err = container.
 		WithRegistryAuth(
 			"docker.io",
