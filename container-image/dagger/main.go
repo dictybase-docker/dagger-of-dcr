@@ -124,25 +124,19 @@ func (cmg *ContainerImage) PublishFromRepo(
 	// dockerhub user name
 	user string,
 	// dockerhub password, use an api token
-	password string,
+	password *Secret,
 ) (string, error) {
 	cont, err := cmg.GenerateImageTag(ctx)
 	if err != nil {
 		return "", err
 	}
-	_, err = cont.WithRegistryAuth(
-		"docker.io",
-		user,
-		dag.SetSecret("docker-pass", password),
-	).Publish(
-		ctx,
-		fmt.Sprintf(
+	_, err = cont.WithRegistryAuth("docker.io", user, password).
+		Publish(ctx, fmt.Sprintf(
 			"%s/%s:%s",
 			cmg.Namespace,
 			cmg.Image,
 			cmg.DockerImageTag,
-		),
-	)
+		))
 	if err != nil {
 		return "", fmt.Errorf("error in publishing docker container %s", err)
 	}
