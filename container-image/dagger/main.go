@@ -83,8 +83,16 @@ func (cmg *ContainerImage) WithRepository(
 	ctx context.Context,
 	// github repository name with owner, for example tora/bora, Required
 	repository string,
+	// whether or not to prepend githubURL to the repository
+	// +optional
+	// +default=true
+	shouldPrepend bool,
 ) *ContainerImage {
-	cmg.Repository = repository
+	if shouldPrepend {
+		cmg.Repository = fmt.Sprintf("%s/%s", githubURL, repository)
+	} else {
+		cmg.Repository = repository
+	}
 	return cmg
 }
 
