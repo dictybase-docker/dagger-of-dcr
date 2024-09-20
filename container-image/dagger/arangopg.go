@@ -11,7 +11,7 @@ func (cmg *ContainerImage) CreateArangoPostgresContainer(
 	ctx context.Context,
 ) (*Container, error) {
 	return dag.Container(ContainerOpts{Platform: "linux/amd64"}).
-			From("arangodb:3.10.14").
+			From("arangodb:3.11.6").
 			WithExec([]string{"apk", "update"}).
 			WithExec([]string{"apk", "add", "postgresql14", "curl", "bzip2"}).
 			WithExec([]string{"curl", "-L", "https://github.com/restic/restic/releases/download/v0.17.0/restic_0.17.0_linux_amd64.bz2", "-o", "/tmp/restic_0.17.0_linux_amd64.bz2"}).
