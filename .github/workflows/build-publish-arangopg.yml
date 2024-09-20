@@ -19,8 +19,9 @@ jobs:
       - name: Build and publish ArangoPG image
         run: |
           branch_name=$(echo ${GITHUB_REF#refs/heads/})
+          short_sha=$(echo ${{ github.sha }} | cut -c1-7)
           just build-publish-arangopg-image \
-            $branch_name-${{ github.sha }} \
+            $branch_name-$short_sha \
             ${{ secrets.DOCKERHUB_USER }} \
             ${{ secrets.DOCKER_PASS }} \
             dictybase restic-redis-arangopg
