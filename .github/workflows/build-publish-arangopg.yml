@@ -1,0 +1,25 @@
+name: Build and Publish ArangoPG Image
+
+on:
+  push:
+    branches: [develop, main]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Setup just
+        uses: extractions/setup-just@v1
+        with:
+          just-version: '1.28.0'
+
+      - name: Build and publish ArangoPG image
+        run: |
+          just build-publish-arangopg-image \
+            ${{ github.ref }} \
+            ${{ secrets.DOCKERHUB_USER }} \
+            ${{ secrets.DOCKER_PASS }} \
+            dictybase restic-arangopg
