@@ -23,4 +23,4 @@ jobs:
             $branch_name-${{ github.sha }} \
             ${{ secrets.DOCKERHUB_USER }} \
             ${{ secrets.DOCKER_PASS }} \
-            dictybase restic-arangopg
+            dictybase restic-redis-arangopg
