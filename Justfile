@@ -178,3 +178,14 @@ build-publish-image repository ref user pass namespace image dockerfile: setup
     with-repository --repository={{repository}} \
     publish-from-repo \
     --user={{user}} --password={{pass}} 
+
+build-publish-arangopg-image ref user pass namespace image: setup
+    #!/usr/bin/env bash
+    set -euxo pipefail
+
+    {{dagger_bin}} call -m {{container_module}} \
+    with-ref --ref={{ref}} \
+    with-namespace --namespace={{namespace}} \
+    with-image --image={{image}} \
+    build-and-publish-arango-postgres-container \
+    --user={{user}} --password={{pass}}
