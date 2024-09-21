@@ -194,7 +194,7 @@ func (cmg *ContainerImage) GenerateImageTag(
 ) (*Container, error) {
 	source := dag.Gitter().
 		WithRef(cmg.Ref).
-		WithRepository(fmt.Sprintf("%s/%s", githubURL, cmg.Repository)).
+		WithRepository(cmg.Repository).
 		Checkout()
 	var genTag string
 	switch {
