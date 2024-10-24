@@ -219,12 +219,9 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 				[]string{
 					"-C", pload.Project,
 					"-s", pload.Stack,
-					"config", "set",
-					fmt.Sprintf(
-						"%s.tag",
-						pload.Application,
-					), pload.DockerImageTag,
-					"--path",
+					"config", "set", "--path",
+					"properties.image.tag",
+					pload.DockerImageTag,
 				},
 			)
 		},
