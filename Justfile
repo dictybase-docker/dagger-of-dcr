@@ -87,7 +87,7 @@ deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token
 
     # create and publish docker image
     {{dagger_bin}} call -m {{container_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository=$REPOSITORY --should-prepend=false \
     publish-from-repo-with-deployment-id --token={{token}} \
     --user={{user}} --password={{pass}} \
     --deployment-id=$deployment_id
