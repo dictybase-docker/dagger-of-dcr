@@ -1,8 +1,9 @@
 set dotenv-load
 dagger_version := "v0.11.9"
 pulumi_version := "3.108.0"
-kops_version := "1.27.1"
+kops_version := "1.29.2"
 kops_module := "kops"
+kubectl_version := "1.28.8"
 gh_deployment_module := "gh-deployment"
 container_module := "container-image"
 deploy_module := "pulumi-ops"
@@ -45,7 +46,7 @@ export-kubectl cluster cluster-state gcp-credentials-file: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops --version={{kops_version}} with-kubectl \
+    with-kops --version={{kops_version}} with-kubectl --version={{kubectl_version}} \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
