@@ -13,7 +13,7 @@ import (
 
 const (
 	pulumiOpsRepo   = "https://github.com/dictybase-docker/cluster-ops.git"
-	pulumiOpsBranch = "master"
+	pulumiOpsBranch = "develop"
 	githubURL       = "https://github.com"
 )
 
