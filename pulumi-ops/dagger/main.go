@@ -293,9 +293,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 			pload.Stack,
 			"up",
 			"-y",
-			"-r",
 			"-f",
-			"--non-interactive",
 		},
 	).Stdout(ctx)
 }
