@@ -319,6 +319,7 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 			for idx := range strings.Split(pload.Application, ":") {
 				execCmd = append(
 					execCmd,
+					"--plaintext",
 					fmt.Sprintf("'properties.apps[%d].tag'", idx),
 					pload.DockerImageTag,
 				)
