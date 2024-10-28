@@ -320,8 +320,11 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 				execCmd = append(
 					execCmd,
 					"--plaintext",
-					fmt.Sprintf("'properties.apps[%d].tag'", idx),
-					pload.DockerImageTag,
+					fmt.Sprintf(
+						"'properties.apps[%d].tag'=%s",
+						idx,
+						pload.DockerImageTag,
+					),
 				)
 			}
 			return container.WithExec(execCmd)
