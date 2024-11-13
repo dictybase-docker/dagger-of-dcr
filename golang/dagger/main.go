@@ -129,3 +129,25 @@ func (gom *Golang) TestGitHub(
 		Checkout()
 	return gom.Test(ctx, source, args)
 }
+
+// LintGitHub runs golangci-lint on a GitHub repository
+func (gom *Golang) LintGitHub(
+	ctx context.Context,
+	// The GitHub repository name (e.g., "username/repo")
+	repository string,
+	// The git reference (branch, tag, or commit) to clone and lint
+	gitRef string,
+	// An optional string specifying the version of golangci-lint to use
+	// +optional
+	// +default="v1.55.2-alpine"
+	version string,
+	// An optional slice of strings representing additional arguments to the golangci-lint command
+	// +optional
+	args []string,
+) (string, error) {
+	source := dag.Gitter().
+		WithRef(gitRef).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, repository)).
+		Checkout()
+	return gom.Lint(ctx, version, source, args)
+}
