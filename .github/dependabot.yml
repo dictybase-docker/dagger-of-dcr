@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Enable version updates for Go modules in all dagger directories
+  - package-ecosystem: "gomod"
+    directories:
+      - "/container-image/dagger"
+      - "/gh-deployment/dagger"
+      - "/gitter/dagger"
+      - "/golang/dagger"
+      - "/kops/dagger"
+      - "/pulumi-ops/dagger"
+    schedule:
+      interval: "weekly"
+      timezone: America/Chicago
+      day: saturday
+    open-pull-requests-limit: 10
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      timezone: America/Chicago
+      day: saturday
+    open-pull-requests-limit: 10
