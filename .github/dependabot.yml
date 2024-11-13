@@ -14,6 +14,29 @@ updates:
       timezone: America/Chicago
       day: saturday
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "go.opentelemetry.io/otel"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/log"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/sdk"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/sdk/log"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/otel/trace"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "go.opentelemetry.io/proto/otlp"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "google.golang.org/grpc"
+        update-types: ["version-update:semver-minor","version-update:semver-patch"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
