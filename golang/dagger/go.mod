@@ -1,4 +1,4 @@
-module dagger/golang-fixed
+module dagger/golang
 
 go 1.22.4
 
