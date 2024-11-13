@@ -190,3 +190,11 @@ build-publish-arangopg-image ref user pass namespace image: setup
     with-image --image={{image}} \
     build-and-publish-arango-postgres-container \
     --user={{user}} --password={{pass}}
+
+lint-repo repository ref: setup
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    {{dagger_bin}} call -m golang \
+        lint-git-hub \
+        --repository={{repository}} \
+        --git-ref={{ref}}
