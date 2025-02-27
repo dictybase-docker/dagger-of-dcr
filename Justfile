@@ -53,6 +53,56 @@ export-kubectl cluster cluster-state gcp-credentials-file: setup
     export-kubectl --output={{kubectl_file}}
 
 
+deploy-buildless-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+    #!/usr/bin/env bash
+    set -euxo pipefail
+
+    # create github deployment
+    deployment_id=`{{dagger_bin}} call -m {{gh_deployment_module}} \
+        with-application --application=$APP \
+        with-docker-image --docker-image=$DOCKER_IMAGE \
+        with-docker-namespace --docker-namespace=$DOCKER_NAMESPACE \
+        with-dockerfile --dockerfile=$DOCKERFILE \
+        with-project --project=$PROJECT \
+        with-stack --stack=$STACK \
+        with-environment --environment=$ENVIRONMENT \
+        with-kubectl-file --kubectl-file={{kubectl_file}} \
+        with-repository --repository=$REPOSITORY \
+        with-ref --ref={{ref}} \
+        create-github-deployment --token={{token}}`
+    
+    # set deployment to in_progress
+    {{dagger_bin}} call -m {{gh_deployment_module}} \
+    with-repository --repository=$REPOSITORY \
+    set-deployment-status --token={{token}} \
+    --deployment-id=$deployment_id \
+    --status=in_progress
+
+    # generate kubectl file
+    {{dagger_bin}} call -m {{kops_module}} \
+    with-kops --version={{kops_version}} with-kubectl \
+    with-state-storage --storage={{cluster-state}} \
+    with-credentials --credentials={{gcp-credentials-file}} \
+    with-cluster --name={{cluster}} \
+    export-kubectl --output={{kubectl_file}}
+
+    #deploy the application
+    {{dagger_bin}} call -m {{deploy_module}} \
+    with-repository --repository=$REPOSITORY \
+    with-credentials --credentials={{gcp-credentials-file}} \
+    with-kube-config --config={{kubectl_file}} \
+    with-backend --backend={{pulumi-state}} \
+    with-pulumi --version={{pulumi_version}} \
+    deploy-backend-through-github --token={{token}} \
+    --deployment-id=$deployment_id
+
+    # finish with successful deployment
+    {{dagger_bin}} call -m {{gh_deployment_module}} \
+    with-repository --repository=$REPOSITORY \
+    set-deployment-status --token={{token}} \
+    --deployment-id=$deployment_id \
+    --status="success"
+
 deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
     #!/usr/bin/env bash
     set -euxo pipefail
