@@ -1,10 +1,11 @@
 module dagger/container-image
 
 go 1.22.2
+toolchain go1.23.6
 
 require (
 	github.com/google/go-github/v63 v63.0.0
-	golang.org/x/oauth2 v0.21.0
+	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.11.0
 )
 
