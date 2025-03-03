@@ -2,8 +2,6 @@ module dagger/container-image
 
 go 1.23.0
 
-toolchain go1.23.5
-
 require (
 	github.com/99designs/gqlgen v0.17.66
 	github.com/Khan/genqlient v0.8.0
