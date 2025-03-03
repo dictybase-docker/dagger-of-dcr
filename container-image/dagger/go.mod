@@ -1,7 +1,6 @@
 module dagger/container-image
 
-go 1.22.2
-toolchain go1.23.6
+go 1.22.4
 
 require (
 	github.com/google/go-github/v63 v63.0.0
