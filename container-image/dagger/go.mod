@@ -1,11 +1,10 @@
 module dagger/container-image
 
-go 1.22
-
+go 1.22.0
 
 require (
-	github.com/99designs/gqlgen v0.17.66
-	github.com/Khan/genqlient v0.8.0
+	github.com/99designs/gqlgen v0.17.49
+	github.com/Khan/genqlient v0.7.0
 	github.com/google/go-github/v63 v63.0.0
 	github.com/vektah/gqlparser/v2 v2.5.23
 	go.opentelemetry.io/otel v1.34.0
@@ -13,7 +12,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.34.0
 	go.opentelemetry.io/otel/sdk v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
-	golang.org/x/exp v0.0.0-20250228200357-dead58393ab7
+	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/oauth2 v0.26.0
 	golang.org/x/sync v0.11.0
 	google.golang.org/grpc v1.70.0
