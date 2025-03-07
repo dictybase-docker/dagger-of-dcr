@@ -1,13 +1,11 @@
 module dagger/golang
 
-go 1.23.0
-
-toolchain go1.23.5
+go 1.22.0
 
 require (
-	github.com/99designs/gqlgen v0.17.66
+	github.com/99designs/gqlgen v0.17.49
 	github.com/IBM/fp-go v1.0.150
-	github.com/Khan/genqlient v0.8.0
+	github.com/Khan/genqlient v0.7.0
 	github.com/go-git/go-git/v5 v5.13.0
 	github.com/vektah/gqlparser/v2 v2.5.23
 	go.opentelemetry.io/otel v1.34.0
@@ -20,7 +18,7 @@ require (
 	go.opentelemetry.io/otel/sdk/log v0.10.0
 	go.opentelemetry.io/otel/trace v1.34.0
 	go.opentelemetry.io/proto/otlp v1.5.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/sync v0.11.0
 	google.golang.org/grpc v1.70.0
 )
