@@ -1,6 +1,6 @@
 module dagger/golang
 
-go 1.22.0
+go 1.22
 
 require (
 	github.com/99designs/gqlgen v0.17.49
@@ -59,3 +59,5 @@ require (
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
+
+replace go.opentelemetry.io/otel/sdk/log => go.opentelemetry.io/otel/sdk/log v0.3.0
