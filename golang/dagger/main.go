@@ -65,7 +65,7 @@ func (gom *Golang) Lint(
 ) (string, error) {
 	return F.Pipe3(
 		dag.Container(),
-		base(LINT_BASE),
+		base(fmt.Sprintf("%s:%s", LINT_BASE, version)),
 		prepareWorkspace(src, PROJ_MOUNT),
 		goLintRunner(args),
 	).Stdout(ctx)
