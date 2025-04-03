@@ -384,10 +384,12 @@ build-publish-arangopg-image ref user pass namespace image: setup
 #   repository: GitHub repository in owner/repo format
 #   ref: The Git reference to lint
 
-lint-repo repository ref: setup
+lint-repo repository ref version: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m golang \
         lint-git-hub \
         --repository={{repository}} \
-        --git-ref={{ref}}
+        --git-ref={{ref}} \
+        --version={{version}}
+
