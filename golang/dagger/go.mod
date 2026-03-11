@@ -3,7 +3,7 @@ module dagger/golang
 go 1.24.0
 
 require (
-	github.com/IBM/fp-go v1.0.150
+	github.com/IBM/fp-go v1.1.84
 	github.com/go-git/go-git/v5 v5.17.0
 )
 
