@@ -307,10 +307,7 @@ func (ghd *GhDeployment) generateDefaultTag(
 	if err != nil {
 		return "", err
 	}
-	parsedRef, err := dag.Gitter().WithRef(ghd.Ref).ParseRef(ctx)
-	if err != nil {
-		return "", err
-	}
+	parsedRef := parseRef(ghd.Ref)
 	return fmt.Sprintf(
 		"%s-%s",
 		parsedRef,
@@ -323,6 +320,15 @@ func formatSha(sha string) string {
 		return sha[:7]
 	}
 	return sha
+}
+
+func parseRef(ref string) string {
+	for _, prefix := range []string{"refs/heads/", "refs/tags/"} {
+		if strings.HasPrefix(ref, prefix) {
+			return strings.TrimPrefix(ref, prefix)
+		}
+	}
+	return ref
 }
 
 // parseOwnerRepo splits the repository string into owner and repo
