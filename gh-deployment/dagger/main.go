@@ -238,10 +238,6 @@ func (ghd *GhDeployment) WithKubectlFile(
 func (ghd *GhDeployment) GenerateImageTag(
 	ctx context.Context,
 ) error {
-	source := dag.Gitter().
-		WithRef(ghd.Ref).
-		WithRepository(fmt.Sprintf("%s/%s", githubURL, ghd.Repository)).
-		Checkout()
 	var genTag string
 	switch {
 	case semverRe.MatchString(ghd.Ref):
@@ -252,7 +248,7 @@ func (ghd *GhDeployment) GenerateImageTag(
 		match := bre.FindStringSubmatch(ghd.Ref)
 		genTag = match[1]
 	default:
-		dtag, err := ghd.generateDefaultTag(ctx, source)
+		dtag, err := ghd.generateDefaultTag(ctx)
 		if err != nil {
 			return err
 		}
@@ -299,11 +295,11 @@ func (ghd *GhDeployment) SetDeploymentStatus(
 
 func (ghd *GhDeployment) generateDefaultTag(
 	ctx context.Context,
-	source *Directory,
 ) (string, error) {
-	commitHash, err := dag.Git().
-		Load(source).
-		Command([]string{"rev-parse", "HEAD"}).Stdout(ctx)
+	commitHash, err := dag.Gitter().
+		WithRef(ghd.Ref).
+		WithRepository(fmt.Sprintf("%s/%s", githubURL, ghd.Repository)).
+		CommitHash(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -311,7 +307,7 @@ func (ghd *GhDeployment) generateDefaultTag(
 	return fmt.Sprintf(
 		"%s-%s",
 		parsedRef,
-		formatSha(commitHash),
+		commitHash,
 	), nil
 }
 
