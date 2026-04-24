@@ -205,7 +205,7 @@ func (cmg *ContainerImage) GenerateImageTag(
 		match := bre.FindStringSubmatch(cmg.Ref)
 		genTag = match[1]
 	default:
-		dtag, err := cmg.generateDefaultTag(ctx, source)
+		dtag, err := cmg.generateDefaultTag(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -218,23 +218,29 @@ func (cmg *ContainerImage) GenerateImageTag(
 
 func (cmg *ContainerImage) generateDefaultTag(
 	ctx context.Context,
-	source *Directory,
 ) (string, error) {
-	commitHash, err := dag.Git().
-		Load(source).
-		Command([]string{"rev-parse", "HEAD"}).Stdout(ctx)
+	commitHash, err := dag.Gitter().
+		WithRef(cmg.Ref).
+		WithRepository(cmg.Repository).
+		CommitHash(ctx)
 	if err != nil {
 		return "", err
 	}
-	parsedRef, err := dag.Gitter().WithRef(cmg.Ref).ParseRef(ctx)
-	if err != nil {
-		return "", err
-	}
+	parsedRef := parseRef(cmg.Ref)
 	return fmt.Sprintf(
 		"%s-%s",
 		parsedRef,
-		formatSha(commitHash),
+		commitHash,
 	), nil
+}
+
+func parseRef(ref string) string {
+	for _, prefix := range []string{"refs/heads/", "refs/tags/"} {
+		if strings.HasPrefix(ref, prefix) {
+			return strings.TrimPrefix(ref, prefix)
+		}
+	}
+	return ref
 }
 
 func formatSha(sha string) string {
