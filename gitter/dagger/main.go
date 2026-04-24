@@ -1,14 +1,11 @@
 // Package main provides a Gitter struct to manipulate git repositories,
-// including setting repository details and performing actions like checkout and inspect.
+// including setting repository details and performing actions like checkout.
 package main
 
 import (
 	"context"
 	"errors"
-	"regexp"
 )
-
-var bre = regexp.MustCompile(`refs/heads/(.+)`)
 
 type Gitter struct {
 	// Repository name
@@ -43,35 +40,20 @@ func (gcmd *Gitter) WithRepository(
 	return gcmd, nil
 }
 
-// Checkout clones the repository and checks out the specific ref
+// Checkout clones the repository and checks out the specific ref.
+// Uses Dagger's native git support — no container build required.
 func (gcmd *Gitter) Checkout(ctx context.Context) *Directory {
-	return dag.Git().
-		Clone(gcmd.Repository).
-		Checkout(gcmd.ParseRef(ctx)).
-		Directory()
+	return dag.Git(gcmd.Repository).Ref(gcmd.Ref).Tree()
 }
 
-// CommitHash retrieves the short commit hash of the HEAD from the specified Git repository.
+// CommitHash retrieves the short commit hash at the specified ref.
 func (gcmd *Gitter) CommitHash(ctx context.Context) (string, error) {
-	return dag.Git().
-		Clone(gcmd.Repository).
-		Checkout(gcmd.ParseRef(ctx)).
-		Command([]string{"rev-parse", "--short", "HEAD"}).Stdout(ctx)
-}
-
-// Inspect clones the given repository and returns a Terminal instance for inspection
-func (gcmd *Gitter) Inspect(ctx context.Context) *Terminal {
-	return dag.Git().
-		Clone(gcmd.Repository).
-		Checkout(gcmd.ParseRef(ctx)).
-		Inspect()
-}
-
-// ParseRef extracts the branch name from a Git reference string or returns the original reference if no match is found.
-func (gcmd *Gitter) ParseRef(ctx context.Context) string {
-	match := bre.FindStringSubmatch(gcmd.Ref)
-	if len(match) > 1 {
-		return match[1]
+	sha, err := dag.Git(gcmd.Repository).Ref(gcmd.Ref).Commit(ctx)
+	if err != nil {
+		return "", err
 	}
-	return gcmd.Ref
+	if len(sha) >= 7 {
+		return sha[:7], nil
+	}
+	return sha, nil
 }
