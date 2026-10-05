@@ -12,9 +12,8 @@ import (
 )
 
 const (
-	pulumiOpsRepo   = "https://github.com/dictybase-docker/cluster-ops.git"
-	pulumiOpsBranch = "develop"
-	githubURL       = "https://github.com"
+	pulumiOpsRepo = "https://github.com/dictybase-docker/cluster-ops.git"
+	githubURL     = "https://github.com"
 )
 
 type Payload struct {
@@ -140,9 +139,12 @@ func (pmo *PulumiOps) DeployApp(
 	// pulumi stack name
 	// + default="dev"
 	stack string,
+	// git ref of the cluster-ops repository to clone
+	// + default="develop"
+	clusterOpsRef string,
 ) (string, error) {
 	opsDir := dag.Gitter().
-		WithRef(pulumiOpsBranch).
+		WithRef(clusterOpsRef).
 		WithRepository(pulumiOpsRepo).
 		Checkout()
 	return pmo.KubeAccess(ctx).
@@ -180,11 +182,15 @@ func (pmo *PulumiOps) DeployAppThroughGithub(
 	deploymentID string,
 	// GitHub token for making API requests, Required
 	token string,
+	// git ref of the cluster-ops repository to clone
+	// + default="develop"
+	clusterOpsRef string,
 ) (string, error) {
 	return pmo.deployThroughGithub(
 		ctx,
 		deploymentID,
 		token,
+		clusterOpsRef,
 		func(container *Container, pload Payload) *Container {
 			return container.WithExec(
 				[]string{
@@ -209,11 +215,15 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 	deploymentID string,
 	// GitHub token for making API requests, Required
 	token string,
+	// git ref of the cluster-ops repository to clone
+	// + default="develop"
+	clusterOpsRef string,
 ) (string, error) {
 	return pmo.deployThroughGithub(
 		ctx,
 		deploymentID,
 		token,
+		clusterOpsRef,
 		func(container *Container, pload Payload) *Container {
 			return container.WithExec(
 				[]string{
@@ -233,6 +243,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 	ctx context.Context,
 	deploymentID string,
 	token string,
+	clusterOpsRef string,
 	setConfigFunc func(*Container, Payload) *Container,
 ) (string, error) {
 	var emptyStr string
@@ -275,7 +286,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 		)
 	}
 	opsDir := dag.Gitter().
-		WithRef(pulumiOpsBranch).
+		WithRef(clusterOpsRef).
 		WithRepository(pulumiOpsRepo).
 		Checkout()
 	container := pmo.WithKubeConfig(ctx, pmo.KubeConfig).
@@ -305,11 +316,15 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 	deploymentID string,
 	// GitHub token for making API requests, Required
 	token string,
+	// git ref of the cluster-ops repository to clone
+	// + default="develop"
+	clusterOpsRef string,
 ) (string, error) {
 	return pmo.deployThroughGithub(
 		ctx,
 		deploymentID,
 		token,
+		clusterOpsRef,
 		func(container *Container, pload Payload) *Container {
 			execCmd := []string{
 				"-C", pload.Project,
