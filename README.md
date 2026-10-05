@@ -131,3 +131,40 @@ dagger -m pulumi-ops call deploy-app --src=/path/to/source --project=backend_app
     --app=my-app --tag=latest --stack=dev
 ```
 
+## Per-cluster tool versions
+
+The deploy recipes accept tool versions as named arguments. Each cluster needs
+a kOps release within the same minor version as its Kubernetes version:
+
+| Cluster | Kubernetes | kOps | kubectl | Pulumi |
+| ------- | ---------- | ---- | ------- | ------ |
+| experiments | 1.28.8 | 1.29.2 (default) | 1.28.8 (default) | 3.108.0 (default) |
+| dcr-kube1 | 1.35.8 | 1.35.x | 1.35.x | 3.108.0 |
+
+The defaults fit the experiments cluster. For dcr-kube1, pass the versions
+explicitly (the cluster-ops registry is the source of truth for the exact
+numbers):
+
+```shell
+just deploy-backend \
+    --cluster dcr-kube1 \
+    --cluster-state gs://dcr-kube1-state \
+    --pulumi-state gs://pulumi-state \
+    --gcp-credentials-file /path/to/credentials.json \
+    --ref develop \
+    --kops-version 1.35.1 \
+    --kubectl-version 1.35.1 \
+    --token "$GH_DEPLOY_TOKEN" \
+    --user "$DOCKERHUB_USER" \
+    --pass "$DOCKER_PASS"
+```
+
+Identity values (application name, Docker image, Pulumi project, and so on)
+default to their matching environment variables, so an existing `.env` file
+keeps working. The `--cluster-ops-ref` option (default `develop`) selects the
+cluster-ops git ref that the Pulumi module clones.
+
+Legacy positional entry points (`deploy-backend-positional` and friends)
+preserve the old calling convention and will be removed after all callers
+migrate.
+
