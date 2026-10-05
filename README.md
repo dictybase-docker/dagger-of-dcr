@@ -141,6 +141,9 @@ a kOps release within the same minor version as its Kubernetes version:
 | experiments | 1.28.8 | 1.29.2 (default) | 1.28.8 (default) | 3.108.0 (default) |
 | dcr-kube1 | 1.35.8 | 1.35.x | 1.35.x | 3.108.0 |
 
+Exact 1.35.x numbers are fixed at implementation time (P0.4), where the
+cluster-ops registry becomes the source of truth.
+
 The defaults fit the experiments cluster. For dcr-kube1, pass the versions
 explicitly (the cluster-ops registry is the source of truth for the exact
 numbers):
@@ -152,8 +155,8 @@ just deploy-backend \
     --pulumi-state gs://pulumi-state \
     --gcp-credentials-file /path/to/credentials.json \
     --ref develop \
-    --kops-version 1.35.1 \
-    --kubectl-version 1.35.1 \
+    --kops-version <1.35.x> \
+    --kubectl-version <1.35.x> \
     --token "$GH_DEPLOY_TOKEN" \
     --user "$DOCKERHUB_USER" \
     --pass "$DOCKER_PASS"
