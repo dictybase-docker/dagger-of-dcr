@@ -393,3 +393,32 @@ lint-repo repository ref version: setup
         --git-ref={{ref}} \
         --version={{version}}
 
+
+# Legacy positional-argument entry points.
+#
+# These recipes preserve the current positional calling convention under
+# alternate names so the dictyBase/workflows composite callers can switch
+# to them before the main recipes convert to named arguments. They simply
+# delegate to the positional recipes above with the same values. They will
+# be removed in the P0.3 cleanup.
+
+export-kubectl-positional cluster cluster-state gcp-credentials-file:
+    @just export-kubectl {{cluster}} {{cluster-state}} {{gcp-credentials-file}}
+
+deploy-buildless-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
+    @just deploy-buildless-backend {{cluster}} {{cluster-state}} {{pulumi-state}} {{gcp-credentials-file}} {{ref}} {{token}} {{user}} {{pass}}
+
+deploy-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
+    @just deploy-backend {{cluster}} {{cluster-state}} {{pulumi-state}} {{gcp-credentials-file}} {{ref}} {{token}} {{user}} {{pass}}
+
+deploy-frontend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
+    @just deploy-frontend {{cluster}} {{cluster-state}} {{pulumi-state}} {{gcp-credentials-file}} {{ref}} {{token}} {{user}} {{pass}}
+
+build-publish-image-positional repository ref user pass namespace image dockerfile:
+    @just build-publish-image {{repository}} {{ref}} {{user}} {{pass}} {{namespace}} {{image}} {{dockerfile}}
+
+build-publish-arangopg-image-positional ref user pass namespace image:
+    @just build-publish-arangopg-image {{ref}} {{user}} {{pass}} {{namespace}} {{image}}
+
+lint-repo-positional repository ref version:
+    @just lint-repo {{repository}} {{ref}} {{version}}
