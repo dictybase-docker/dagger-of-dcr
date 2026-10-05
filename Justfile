@@ -1,5 +1,8 @@
 set dotenv-load
 dagger_version := "v0.11.9"
+# Default tool versions. These fit the experiments cluster (Kubernetes 1.28.8).
+# Per-cluster versions are passed as named arguments; the registry in
+# cluster-ops is the source of truth (see README).
 pulumi_version := "3.108.0"
 kops_version := "1.29.2"
 kops_module := "kops"
@@ -54,7 +57,7 @@ setup: install-gha-binary install-dagger-binary
 [group('setup-tools')]
 install-gha-binary:
 	@curl -L -o {{action_bin}} {{gha_download_url}}
-	@chmod +x {{action_bin}} 
+	@chmod +x {{action_bin}}
 
 # Install Dagger binary
 #
@@ -69,16 +72,26 @@ install-dagger-binary:
 # This recipe generates a kubectl configuration file for accessing a Kubernetes
 # cluster.
 #
-# Args:
-#   cluster: The name of the Kubernetes cluster
-#   cluster-state: The GCS bucket containing the cluster state
-#   gcp-credentials-file: Path to the GCP credentials file
+# Options:
+#   --cluster                 The name of the Kubernetes cluster (required)
+#   --cluster-state           The GCS bucket containing the cluster state (required)
+#   --gcp-credentials-file    Path to the GCP credentials file (required)
+#   --kops-version            kOps version, must match the cluster's Kubernetes
+#                             minor release (default: 1.29.2)
+#   --kubectl-version         kubectl version (default: 1.28.8)
 
-export-kubectl cluster cluster-state gcp-credentials-file: setup
+[arg('cluster', long), arg('cluster-state', long), arg('gcp-credentials-file', long)]
+[arg('kops-version', long), arg('kubectl-version', long)]
+export-kubectl \
+    cluster \
+    cluster-state \
+    gcp-credentials-file \
+    kops-version=kops_version \
+    kubectl-version=kubectl_version: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops --version={{kops_version}} with-kubectl --version={{kubectl_version}} \
+    with-kops --version={{kops-version}} with-kubectl --version={{kubectl-version}} \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
@@ -86,59 +99,92 @@ export-kubectl cluster cluster-state gcp-credentials-file: setup
 
 
 # Deploy a backend application without building a new Docker image
-# 
+#
 # This recipe deploys a backend application using an existing Docker image.
 # It creates a GitHub deployment, sets up Kubernetes configuration, and deploys
 # the application using Pulumi without building a new Docker image.
 #
-# Args:
-#   cluster: The name of the Kubernetes cluster
-#   cluster-state: The GCS bucket containing the cluster state
-#   pulumi-state: The Pulumi state backend URL
-#   gcp-credentials-file: Path to the GCP credentials file
-#   ref: The Git reference to deploy
-#   token: GitHub token for creating deployments
-#   user: Docker registry username
-#   pass: Docker registry password
+# Options:
+#   --cluster                 The name of the Kubernetes cluster (required)
+#   --cluster-state           The GCS bucket containing the cluster state (required)
+#   --pulumi-state            The Pulumi state backend URL (required)
+#   --gcp-credentials-file    Path to the GCP credentials file (required)
+#   --ref                     The Git reference to deploy (required)
+#   --token                   GitHub token for creating deployments (required)
+#   --user                    Docker registry username (required)
+#   --pass                    Docker registry password (required)
+#   --kops-version            kOps version, must match the cluster's Kubernetes
+#                             minor release (default: 1.29.2)
+#   --kubectl-version         kubectl version (default: 1.28.8)
+#   --pulumi-version          Pulumi CLI version (default: 3.108.0)
+#   --cluster-ops-ref         Git ref of cluster-ops to clone (default: develop)
+#   --app                     Application name (default: $APP)
+#   --docker-image            Docker image name (default: $DOCKER_IMAGE)
+#   --docker-namespace        Docker namespace (default: $DOCKER_NAMESPACE)
+#   --dockerfile              Path to Dockerfile (default: $DOCKERFILE)
+#   --project                 Pulumi project name (default: $PROJECT)
+#   --stack                   Pulumi stack name (default: $STACK)
+#   --environment             Deployment environment (default: $ENVIRONMENT)
+#   --repository              GitHub repository in owner/repo format (default: $REPOSITORY)
 #
-# Environment variables required:
-#   APP: Application name
-#   DOCKER_IMAGE: Docker image name
-#   DOCKER_NAMESPACE: Docker namespace
-#   DOCKERFILE: Path to Dockerfile
-#   PROJECT: Pulumi project name
-#   STACK: Pulumi stack name
-#   ENVIRONMENT: Deployment environment
-#   REPOSITORY: GitHub repository in owner/repo format
+# The identity options default to the matching environment variables, so an
+# existing `.env` file keeps working.
 
-deploy-buildless-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+[arg('cluster', long), arg('cluster-state', long), arg('pulumi-state', long)]
+[arg('gcp-credentials-file', long), arg('ref', long), arg('token', long)]
+[arg('user', long), arg('pass', long), arg('kops-version', long)]
+[arg('kubectl-version', long), arg('pulumi-version', long), arg('cluster-ops-ref', long)]
+[arg('app', long), arg('docker-image', long), arg('docker-namespace', long)]
+[arg('dockerfile', long), arg('project', long), arg('stack', long)]
+[arg('environment', long), arg('repository', long)]
+deploy-buildless-backend \
+    cluster \
+    cluster-state \
+    pulumi-state \
+    gcp-credentials-file \
+    ref \
+    token \
+    user \
+    pass \
+    kops-version=kops_version \
+    kubectl-version=kubectl_version \
+    pulumi-version=pulumi_version \
+    cluster-ops-ref="develop" \
+    app=env_var_or_default("APP", "") \
+    docker-image=env_var_or_default("DOCKER_IMAGE", "") \
+    docker-namespace=env_var_or_default("DOCKER_NAMESPACE", "") \
+    dockerfile=env_var_or_default("DOCKERFILE", "") \
+    project=env_var_or_default("PROJECT", "") \
+    stack=env_var_or_default("STACK", "") \
+    environment=env_var_or_default("ENVIRONMENT", "") \
+    repository=env_var_or_default("REPOSITORY", ""): setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
     # create github deployment
     deployment_id=`{{dagger_bin}} call -m {{gh_deployment_module}} \
-        with-application --application=$APP \
-        with-docker-image --docker-image=$DOCKER_IMAGE \
-        with-docker-namespace --docker-namespace=$DOCKER_NAMESPACE \
-        with-dockerfile --dockerfile=$DOCKERFILE \
-        with-project --project=$PROJECT \
-        with-stack --stack=$STACK \
-        with-environment --environment=$ENVIRONMENT \
+        with-application --application={{app}} \
+        with-docker-image --docker-image={{docker-image}} \
+        with-docker-namespace --docker-namespace={{docker-namespace}} \
+        with-dockerfile --dockerfile={{dockerfile}} \
+        with-project --project={{project}} \
+        with-stack --stack={{stack}} \
+        with-environment --environment={{environment}} \
         with-kubectl-file --kubectl-file={{kubectl_file}} \
-        with-repository --repository=$REPOSITORY \
+        with-repository --repository={{repository}} \
         with-ref --ref={{ref}} \
         create-github-deployment --token={{token}}`
-    
+
     # set deployment to in_progress
     {{dagger_bin}} call -m {{gh_deployment_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     set-deployment-status --token={{token}} \
     --deployment-id=$deployment_id \
     --status=in_progress
 
     # generate kubectl file
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops --version={{kops_version}} with-kubectl \
+    with-kops --version={{kops-version}} with-kubectl --version={{kubectl-version}} \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
@@ -146,17 +192,18 @@ deploy-buildless-backend cluster cluster-state pulumi-state gcp-credentials-file
 
     #deploy the application
     {{dagger_bin}} call -m {{deploy_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-kube-config --config={{kubectl_file}} \
     with-backend --backend={{pulumi-state}} \
-    with-pulumi --version={{pulumi_version}} \
+    with-pulumi --version={{pulumi-version}} \
     deploy-backend-through-github --token={{token}} \
-    --deployment-id=$deployment_id
+    --deployment-id=$deployment_id \
+    --cluster-ops-ref={{cluster-ops-ref}}
 
     # finish with successful deployment
     {{dagger_bin}} call -m {{gh_deployment_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     set-deployment-status --token={{token}} \
     --deployment-id=$deployment_id \
     --status="success"
@@ -167,54 +214,87 @@ deploy-buildless-backend cluster cluster-state pulumi-state gcp-credentials-file
 # It creates a GitHub deployment, builds and publishes a Docker image,
 # and deploys the application using Pulumi.
 #
-# Args:
-#   cluster: The name of the Kubernetes cluster
-#   cluster-state: The GCS bucket containing the cluster state
-#   pulumi-state: The Pulumi state backend URL
-#   gcp-credentials-file: Path to the GCP credentials file
-#   ref: The Git reference to deploy
-#   token: GitHub token for creating deployments
-#   user: Docker registry username
-#   pass: Docker registry password
+# Options:
+#   --cluster                 The name of the Kubernetes cluster (required)
+#   --cluster-state           The GCS bucket containing the cluster state (required)
+#   --pulumi-state            The Pulumi state backend URL (required)
+#   --gcp-credentials-file    Path to the GCP credentials file (required)
+#   --ref                     The Git reference to deploy (required)
+#   --token                   GitHub token for creating deployments (required)
+#   --user                    Docker registry username (required)
+#   --pass                    Docker registry password (required)
+#   --kops-version            kOps version, must match the cluster's Kubernetes
+#                             minor release (default: 1.29.2)
+#   --kubectl-version         kubectl version (default: 1.28.8)
+#   --pulumi-version          Pulumi CLI version (default: 3.108.0)
+#   --cluster-ops-ref         Git ref of cluster-ops to clone (default: develop)
+#   --app                     Application name (default: $APP)
+#   --docker-image            Docker image name (default: $DOCKER_IMAGE)
+#   --docker-namespace        Docker namespace (default: $DOCKER_NAMESPACE)
+#   --dockerfile              Path to Dockerfile (default: $DOCKERFILE)
+#   --project                 Pulumi project name (default: $PROJECT)
+#   --stack                   Pulumi stack name (default: $STACK)
+#   --environment             Deployment environment (default: $ENVIRONMENT)
+#   --repository              GitHub repository in owner/repo format (default: $REPOSITORY)
 #
-# Environment variables required:
-#   APP: Application name
-#   DOCKER_IMAGE: Docker image name
-#   DOCKER_NAMESPACE: Docker namespace
-#   DOCKERFILE: Path to Dockerfile
-#   PROJECT: Pulumi project name
-#   STACK: Pulumi stack name
-#   ENVIRONMENT: Deployment environment
-#   REPOSITORY: GitHub repository in owner/repo format
+# The identity options default to the matching environment variables, so an
+# existing `.env` file keeps working.
 
-deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+[arg('cluster', long), arg('cluster-state', long), arg('pulumi-state', long)]
+[arg('gcp-credentials-file', long), arg('ref', long), arg('token', long)]
+[arg('user', long), arg('pass', long), arg('kops-version', long)]
+[arg('kubectl-version', long), arg('pulumi-version', long), arg('cluster-ops-ref', long)]
+[arg('app', long), arg('docker-image', long), arg('docker-namespace', long)]
+[arg('dockerfile', long), arg('project', long), arg('stack', long)]
+[arg('environment', long), arg('repository', long)]
+deploy-backend \
+    cluster \
+    cluster-state \
+    pulumi-state \
+    gcp-credentials-file \
+    ref \
+    token \
+    user \
+    pass \
+    kops-version=kops_version \
+    kubectl-version=kubectl_version \
+    pulumi-version=pulumi_version \
+    cluster-ops-ref="develop" \
+    app=env_var_or_default("APP", "") \
+    docker-image=env_var_or_default("DOCKER_IMAGE", "") \
+    docker-namespace=env_var_or_default("DOCKER_NAMESPACE", "") \
+    dockerfile=env_var_or_default("DOCKERFILE", "") \
+    project=env_var_or_default("PROJECT", "") \
+    stack=env_var_or_default("STACK", "") \
+    environment=env_var_or_default("ENVIRONMENT", "") \
+    repository=env_var_or_default("REPOSITORY", ""): setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
     # create github deployment
     deployment_id=`{{dagger_bin}} call -m {{gh_deployment_module}} \
-        with-application --application=$APP \
-        with-docker-image --docker-image=$DOCKER_IMAGE \
-        with-docker-namespace --docker-namespace=$DOCKER_NAMESPACE \
-        with-dockerfile --dockerfile=$DOCKERFILE \
-        with-project --project=$PROJECT \
-        with-stack --stack=$STACK \
-        with-environment --environment=$ENVIRONMENT \
+        with-application --application={{app}} \
+        with-docker-image --docker-image={{docker-image}} \
+        with-docker-namespace --docker-namespace={{docker-namespace}} \
+        with-dockerfile --dockerfile={{dockerfile}} \
+        with-project --project={{project}} \
+        with-stack --stack={{stack}} \
+        with-environment --environment={{environment}} \
         with-kubectl-file --kubectl-file={{kubectl_file}} \
-        with-repository --repository=$REPOSITORY \
+        with-repository --repository={{repository}} \
         with-ref --ref={{ref}} \
         create-github-deployment --token={{token}}`
-    
+
     # set deployment to in_progress
     {{dagger_bin}} call -m {{gh_deployment_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     set-deployment-status --token={{token}} \
     --deployment-id=$deployment_id \
     --status=in_progress
 
     # generate kubectl file
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops --version={{kops_version}} with-kubectl \
+    with-kops --version={{kops-version}} with-kubectl --version={{kubectl-version}} \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
@@ -222,24 +302,25 @@ deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token
 
     # create and publish docker image
     {{dagger_bin}} call -m {{container_module}} \
-    with-repository --repository=$REPOSITORY --should-prepend=false \
+    with-repository --repository={{repository}} --should-prepend=false \
     publish-from-repo-with-deployment-id --token={{token}} \
     --user={{user}} --password={{pass}} \
     --deployment-id=$deployment_id
 
     #deploy the application
     {{dagger_bin}} call -m {{deploy_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-kube-config --config={{kubectl_file}} \
     with-backend --backend={{pulumi-state}} \
-    with-pulumi --version={{pulumi_version}} \
+    with-pulumi --version={{pulumi-version}} \
     deploy-backend-through-github --token={{token}} \
-    --deployment-id=$deployment_id
+    --deployment-id=$deployment_id \
+    --cluster-ops-ref={{cluster-ops-ref}}
 
     # finish with successful deployment
     {{dagger_bin}} call -m {{gh_deployment_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     set-deployment-status --token={{token}} \
     --deployment-id=$deployment_id \
     --status="success"
@@ -250,54 +331,87 @@ deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token
 # It creates a GitHub deployment, builds and publishes a Docker image,
 # and deploys the application using Pulumi.
 #
-# Args:
-#   cluster: The name of the Kubernetes cluster
-#   cluster-state: The GCS bucket containing the cluster state
-#   pulumi-state: The Pulumi state backend URL
-#   gcp-credentials-file: Path to the GCP credentials file
-#   ref: The Git reference to deploy
-#   token: GitHub token for creating deployments
-#   user: Docker registry username
-#   pass: Docker registry password
+# Options:
+#   --cluster                 The name of the Kubernetes cluster (required)
+#   --cluster-state           The GCS bucket containing the cluster state (required)
+#   --pulumi-state            The Pulumi state backend URL (required)
+#   --gcp-credentials-file    Path to the GCP credentials file (required)
+#   --ref                     The Git reference to deploy (required)
+#   --token                   GitHub token for creating deployments (required)
+#   --user                    Docker registry username (required)
+#   --pass                    Docker registry password (required)
+#   --kops-version            kOps version, must match the cluster's Kubernetes
+#                             minor release (default: 1.29.2)
+#   --kubectl-version         kubectl version (default: 1.28.8)
+#   --pulumi-version          Pulumi CLI version (default: 3.108.0)
+#   --cluster-ops-ref         Git ref of cluster-ops to clone (default: develop)
+#   --app                     Application name (default: $APP)
+#   --docker-image            Docker image name (default: $DOCKER_IMAGE)
+#   --docker-namespace        Docker namespace (default: $DOCKER_NAMESPACE)
+#   --dockerfile              Path to Dockerfile (default: $DOCKERFILE)
+#   --project                 Pulumi project name (default: $PROJECT)
+#   --stack                   Pulumi stack name (default: $STACK)
+#   --environment             Deployment environment (default: $ENVIRONMENT)
+#   --repository              GitHub repository in owner/repo format (default: $REPOSITORY)
 #
-# Environment variables required:
-#   APP: Application name
-#   DOCKER_IMAGE: Docker image name
-#   DOCKER_NAMESPACE: Docker namespace
-#   DOCKERFILE: Path to Dockerfile
-#   PROJECT: Pulumi project name
-#   STACK: Pulumi stack name
-#   ENVIRONMENT: Deployment environment
-#   REPOSITORY: GitHub repository in owner/repo format
+# The identity options default to the matching environment variables, so an
+# existing `.env` file keeps working.
 
-deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+[arg('cluster', long), arg('cluster-state', long), arg('pulumi-state', long)]
+[arg('gcp-credentials-file', long), arg('ref', long), arg('token', long)]
+[arg('user', long), arg('pass', long), arg('kops-version', long)]
+[arg('kubectl-version', long), arg('pulumi-version', long), arg('cluster-ops-ref', long)]
+[arg('app', long), arg('docker-image', long), arg('docker-namespace', long)]
+[arg('dockerfile', long), arg('project', long), arg('stack', long)]
+[arg('environment', long), arg('repository', long)]
+deploy-frontend \
+    cluster \
+    cluster-state \
+    pulumi-state \
+    gcp-credentials-file \
+    ref \
+    token \
+    user \
+    pass \
+    kops-version=kops_version \
+    kubectl-version=kubectl_version \
+    pulumi-version=pulumi_version \
+    cluster-ops-ref="develop" \
+    app=env_var_or_default("APP", "") \
+    docker-image=env_var_or_default("DOCKER_IMAGE", "") \
+    docker-namespace=env_var_or_default("DOCKER_NAMESPACE", "") \
+    dockerfile=env_var_or_default("DOCKERFILE", "") \
+    project=env_var_or_default("PROJECT", "") \
+    stack=env_var_or_default("STACK", "") \
+    environment=env_var_or_default("ENVIRONMENT", "") \
+    repository=env_var_or_default("REPOSITORY", ""): setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
     # create github deployment
     deployment_id=`{{dagger_bin}} call -m {{gh_deployment_module}} \
-        with-application --application=$APP \
-        with-docker-image --docker-image=$DOCKER_IMAGE \
-        with-docker-namespace --docker-namespace=$DOCKER_NAMESPACE \
-        with-dockerfile --dockerfile=$DOCKERFILE \
-        with-project --project=$PROJECT \
-        with-stack --stack=$STACK \
-        with-environment --environment=$ENVIRONMENT \
+        with-application --application={{app}} \
+        with-docker-image --docker-image={{docker-image}} \
+        with-docker-namespace --docker-namespace={{docker-namespace}} \
+        with-dockerfile --dockerfile={{dockerfile}} \
+        with-project --project={{project}} \
+        with-stack --stack={{stack}} \
+        with-environment --environment={{environment}} \
         with-kubectl-file --kubectl-file={{kubectl_file}} \
-        with-repository --repository=$REPOSITORY \
+        with-repository --repository={{repository}} \
         with-ref --ref={{ref}} \
         create-github-deployment --token={{token}}`
-    
+
     # set deployment to in_progress
     {{dagger_bin}} call -m {{gh_deployment_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     set-deployment-status --token={{token}} \
     --deployment-id=$deployment_id \
     --status=in_progress
 
     # generate kubectl file
     {{dagger_bin}} call -m {{kops_module}} \
-    with-kops --version={{kops_version}} with-kubectl \
+    with-kops --version={{kops-version}} with-kubectl --version={{kubectl-version}} \
     with-state-storage --storage={{cluster-state}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-cluster --name={{cluster}} \
@@ -305,24 +419,25 @@ deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref toke
 
     # create and publish docker image
     {{dagger_bin}} call -m {{container_module}} \
-    with-repository --repository=$REPOSITORY --should-prepend=false \
+    with-repository --repository={{repository}} --should-prepend=false \
     publish-frontend-from-repo-with-deployment-id --token={{token}} \
     --user={{user}} --password={{pass}} \
     --deployment-id=$deployment_id
 
     #deploy the application
     {{dagger_bin}} call -m {{deploy_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     with-credentials --credentials={{gcp-credentials-file}} \
     with-kube-config --config={{kubectl_file}} \
     with-backend --backend={{pulumi-state}} \
-    with-pulumi --version={{pulumi_version}} \
+    with-pulumi --version={{pulumi-version}} \
     deploy-frontend-through-github --token={{token}} \
-    --deployment-id=$deployment_id
+    --deployment-id=$deployment_id \
+    --cluster-ops-ref={{cluster-ops-ref}}
 
     # finish with successful deployment
     {{dagger_bin}} call -m {{gh_deployment_module}} \
-    with-repository --repository=$REPOSITORY \
+    with-repository --repository={{repository}} \
     set-deployment-status --token={{token}} \
     --deployment-id=$deployment_id \
     --status="success"
@@ -331,16 +446,26 @@ deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref toke
 #
 # This recipe builds and publishes a Docker image from a repository.
 #
-# Args:
-#   repository: GitHub repository in owner/repo format
-#   ref: The Git reference to use
-#   user: Docker registry username
-#   pass: Docker registry password
-#   namespace: Docker namespace
-#   image: Docker image name
-#   dockerfile: Path to Dockerfile
+# Options:
+#   --repository    GitHub repository in owner/repo format (required)
+#   --ref           The Git reference to use (required)
+#   --user          Docker registry username (required)
+#   --pass          Docker registry password (required)
+#   --namespace     Docker namespace (required)
+#   --image         Docker image name (required)
+#   --dockerfile    Path to Dockerfile (required)
 
-build-publish-image repository ref user pass namespace image dockerfile: setup 
+[arg('repository', long), arg('ref', long), arg('user', long)]
+[arg('pass', long), arg('namespace', long), arg('image', long)]
+[arg('dockerfile', long)]
+build-publish-image \
+    repository \
+    ref \
+    user \
+    pass \
+    namespace \
+    image \
+    dockerfile: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -351,21 +476,28 @@ build-publish-image repository ref user pass namespace image dockerfile: setup
     with-dockerfile --docker-file={{dockerfile}} \
     with-repository --repository={{repository}} \
     publish-from-repo \
-    --user={{user}} --password={{pass}} 
+    --user={{user}} --password={{pass}}
 
 # Build and publish ArangoDB with PostgreSQL image
 #
 # This recipe builds and publishes a specialized Docker image containing
 # both ArangoDB and PostgreSQL.
 #
-# Args:
-#   ref: The Git reference to use
-#   user: Docker registry username
-#   pass: Docker registry password
-#   namespace: Docker namespace
-#   image: Docker image name
+# Options:
+#   --ref         The Git reference to use (required)
+#   --user        Docker registry username (required)
+#   --pass        Docker registry password (required)
+#   --namespace   Docker namespace (required)
+#   --image       Docker image name (required)
 
-build-publish-arangopg-image ref user pass namespace image: setup
+[arg('ref', long), arg('user', long), arg('pass', long)]
+[arg('namespace', long), arg('image', long)]
+build-publish-arangopg-image \
+    ref \
+    user \
+    pass \
+    namespace \
+    image: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -380,11 +512,16 @@ build-publish-arangopg-image ref user pass namespace image: setup
 #
 # This recipe runs linting checks on a GitHub repository.
 #
-# Args:
-#   repository: GitHub repository in owner/repo format
-#   ref: The Git reference to lint
+# Options:
+#   --repository    GitHub repository in owner/repo format (required)
+#   --ref           The Git reference to lint (required)
+#   --version       Version of the linter to use (required)
 
-lint-repo repository ref version: setup
+[arg('repository', long), arg('ref', long), arg('version', long)]
+lint-repo \
+    repository \
+    ref \
+    version: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m golang \
@@ -393,32 +530,73 @@ lint-repo repository ref version: setup
         --git-ref={{ref}} \
         --version={{version}}
 
-
 # Legacy positional-argument entry points.
 #
-# These recipes preserve the current positional calling convention under
-# alternate names so the dictyBase/workflows composite callers can switch
-# to them before the main recipes convert to named arguments. They simply
-# delegate to the positional recipes above with the same values. They will
-# be removed in the P0.3 cleanup.
+# These recipes preserve the pre-named-argument calling convention used by
+# the dictyBase/workflows composite callers until they migrate to the named
+# recipes above. They take the old positional values in the old order and
+# delegate to the named recipes with default tool versions. They will be
+# removed in the P0.3 cleanup.
 
-export-kubectl-positional cluster cluster-state gcp-credentials-file:
-    @just export-kubectl {{cluster}} {{cluster-state}} {{gcp-credentials-file}}
+export-kubectl-positional cluster cluster-state gcp-credentials-file: setup
+    @just export-kubectl \
+    --cluster {{cluster}} \
+    --cluster-state {{cluster-state}} \
+    --gcp-credentials-file {{gcp-credentials-file}}
 
-deploy-buildless-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
-    @just deploy-buildless-backend {{cluster}} {{cluster-state}} {{pulumi-state}} {{gcp-credentials-file}} {{ref}} {{token}} {{user}} {{pass}}
+deploy-buildless-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+    @just deploy-buildless-backend \
+    --cluster {{cluster}} \
+    --cluster-state {{cluster-state}} \
+    --pulumi-state {{pulumi-state}} \
+    --gcp-credentials-file {{gcp-credentials-file}} \
+    --ref {{ref}} \
+    --token {{token}} \
+    --user {{user}} \
+    --pass {{pass}}
 
-deploy-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
-    @just deploy-backend {{cluster}} {{cluster-state}} {{pulumi-state}} {{gcp-credentials-file}} {{ref}} {{token}} {{user}} {{pass}}
+deploy-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+    @just deploy-backend \
+    --cluster {{cluster}} \
+    --cluster-state {{cluster-state}} \
+    --pulumi-state {{pulumi-state}} \
+    --gcp-credentials-file {{gcp-credentials-file}} \
+    --ref {{ref}} \
+    --token {{token}} \
+    --user {{user}} \
+    --pass {{pass}}
 
-deploy-frontend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
-    @just deploy-frontend {{cluster}} {{cluster-state}} {{pulumi-state}} {{gcp-credentials-file}} {{ref}} {{token}} {{user}} {{pass}}
+deploy-frontend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+    @just deploy-frontend \
+    --cluster {{cluster}} \
+    --cluster-state {{cluster-state}} \
+    --pulumi-state {{pulumi-state}} \
+    --gcp-credentials-file {{gcp-credentials-file}} \
+    --ref {{ref}} \
+    --token {{token}} \
+    --user {{user}} \
+    --pass {{pass}}
 
-build-publish-image-positional repository ref user pass namespace image dockerfile:
-    @just build-publish-image {{repository}} {{ref}} {{user}} {{pass}} {{namespace}} {{image}} {{dockerfile}}
+build-publish-image-positional repository ref user pass namespace image dockerfile: setup
+    @just build-publish-image \
+    --repository {{repository}} \
+    --ref {{ref}} \
+    --user {{user}} \
+    --pass {{pass}} \
+    --namespace {{namespace}} \
+    --image {{image}} \
+    --dockerfile {{dockerfile}}
 
-build-publish-arangopg-image-positional ref user pass namespace image:
-    @just build-publish-arangopg-image {{ref}} {{user}} {{pass}} {{namespace}} {{image}}
+build-publish-arangopg-image-positional ref user pass namespace image: setup
+    @just build-publish-arangopg-image \
+    --ref {{ref}} \
+    --user {{user}} \
+    --pass {{pass}} \
+    --namespace {{namespace}} \
+    --image {{image}}
 
-lint-repo-positional repository ref version:
-    @just lint-repo {{repository}} {{ref}} {{version}}
+lint-repo-positional repository ref version: setup
+    @just lint-repo \
+    --repository {{repository}} \
+    --ref {{ref}} \
+    --version {{version}}
