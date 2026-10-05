@@ -163,11 +163,6 @@ just deploy-backend \
 ```
 
 Identity values (application name, Docker image, Pulumi project, and so on)
-default to their matching environment variables, so an existing `.env` file
-keeps working. The `--cluster-ops-ref` option (default `develop`) selects the
-cluster-ops git ref that the Pulumi module clones.
-
-Legacy positional entry points (`deploy-backend-positional` and friends)
-preserve the old calling convention and will be removed after all callers
-migrate.
+are required options. The `--cluster-ops-ref` option (default `develop`)
+selects the cluster-ops git ref that the Pulumi module clones.
 
