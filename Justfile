@@ -538,13 +538,13 @@ lint-repo \
 # delegate to the named recipes with default tool versions. They will be
 # removed in the P0.3 cleanup.
 
-export-kubectl-positional cluster cluster-state gcp-credentials-file: setup
+export-kubectl-positional cluster cluster-state gcp-credentials-file:
     @just export-kubectl \
     --cluster {{cluster}} \
     --cluster-state {{cluster-state}} \
     --gcp-credentials-file {{gcp-credentials-file}}
 
-deploy-buildless-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+deploy-buildless-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
     @just deploy-buildless-backend \
     --cluster {{cluster}} \
     --cluster-state {{cluster-state}} \
@@ -555,7 +555,7 @@ deploy-buildless-backend-positional cluster cluster-state pulumi-state gcp-crede
     --user {{user}} \
     --pass {{pass}}
 
-deploy-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+deploy-backend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
     @just deploy-backend \
     --cluster {{cluster}} \
     --cluster-state {{cluster-state}} \
@@ -566,7 +566,7 @@ deploy-backend-positional cluster cluster-state pulumi-state gcp-credentials-fil
     --user {{user}} \
     --pass {{pass}}
 
-deploy-frontend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass: setup
+deploy-frontend-positional cluster cluster-state pulumi-state gcp-credentials-file ref token user pass:
     @just deploy-frontend \
     --cluster {{cluster}} \
     --cluster-state {{cluster-state}} \
@@ -577,7 +577,7 @@ deploy-frontend-positional cluster cluster-state pulumi-state gcp-credentials-fi
     --user {{user}} \
     --pass {{pass}}
 
-build-publish-image-positional repository ref user pass namespace image dockerfile: setup
+build-publish-image-positional repository ref user pass namespace image dockerfile:
     @just build-publish-image \
     --repository {{repository}} \
     --ref {{ref}} \
@@ -587,7 +587,7 @@ build-publish-image-positional repository ref user pass namespace image dockerfi
     --image {{image}} \
     --dockerfile {{dockerfile}}
 
-build-publish-arangopg-image-positional ref user pass namespace image: setup
+build-publish-arangopg-image-positional ref user pass namespace image:
     @just build-publish-arangopg-image \
     --ref {{ref}} \
     --user {{user}} \
@@ -595,7 +595,7 @@ build-publish-arangopg-image-positional ref user pass namespace image: setup
     --namespace {{namespace}} \
     --image {{image}}
 
-lint-repo-positional repository ref version: setup
+lint-repo-positional repository ref version:
     @just lint-repo \
     --repository {{repository}} \
     --ref {{ref}} \
