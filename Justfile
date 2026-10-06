@@ -81,12 +81,7 @@ install-dagger-binary:
 
 [arg('cluster', long), arg('cluster-state', long), arg('gcp-credentials-file', long)]
 [arg('kops-version', long), arg('kubectl-version', long)]
-export-kubectl \
-    cluster \
-    cluster-state \
-    gcp-credentials-file \
-    kops-version=kops_version \
-    kubectl-version=kubectl_version: setup
+export-kubectl cluster cluster-state gcp-credentials-file kops-version=kops_version kubectl-version=kubectl_version: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m {{kops_module}} \
@@ -133,27 +128,7 @@ export-kubectl \
 [arg('app', long), arg('docker-image', long), arg('docker-namespace', long)]
 [arg('dockerfile', long), arg('project', long), arg('stack', long)]
 [arg('environment', long), arg('repository', long)]
-deploy-buildless-backend \
-    cluster \
-    cluster-state \
-    pulumi-state \
-    gcp-credentials-file \
-    ref \
-    token \
-    user \
-    pass \
-    kops-version=kops_version \
-    kubectl-version=kubectl_version \
-    pulumi-version=pulumi_version \
-    cluster-ops-ref="develop" \
-    app \
-    docker-image \
-    docker-namespace \
-    dockerfile \
-    project \
-    stack \
-    environment \
-    repository: setup
+deploy-buildless-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass kops-version=kops_version kubectl-version=kubectl_version pulumi-version=pulumi_version cluster-ops-ref="develop" app docker-image docker-namespace dockerfile project stack environment repository: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -240,27 +215,7 @@ deploy-buildless-backend \
 [arg('app', long), arg('docker-image', long), arg('docker-namespace', long)]
 [arg('dockerfile', long), arg('project', long), arg('stack', long)]
 [arg('environment', long), arg('repository', long)]
-deploy-backend \
-    cluster \
-    cluster-state \
-    pulumi-state \
-    gcp-credentials-file \
-    ref \
-    token \
-    user \
-    pass \
-    kops-version=kops_version \
-    kubectl-version=kubectl_version \
-    pulumi-version=pulumi_version \
-    cluster-ops-ref="develop" \
-    app \
-    docker-image \
-    docker-namespace \
-    dockerfile \
-    project \
-    stack \
-    environment \
-    repository: setup
+deploy-backend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass kops-version=kops_version kubectl-version=kubectl_version pulumi-version=pulumi_version cluster-ops-ref="develop" app docker-image docker-namespace dockerfile project stack environment repository: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -354,27 +309,7 @@ deploy-backend \
 [arg('app', long), arg('docker-image', long), arg('docker-namespace', long)]
 [arg('dockerfile', long), arg('project', long), arg('stack', long)]
 [arg('environment', long), arg('repository', long)]
-deploy-frontend \
-    cluster \
-    cluster-state \
-    pulumi-state \
-    gcp-credentials-file \
-    ref \
-    token \
-    user \
-    pass \
-    kops-version=kops_version \
-    kubectl-version=kubectl_version \
-    pulumi-version=pulumi_version \
-    cluster-ops-ref="develop" \
-    app \
-    docker-image \
-    docker-namespace \
-    dockerfile \
-    project \
-    stack \
-    environment \
-    repository: setup
+deploy-frontend cluster cluster-state pulumi-state gcp-credentials-file ref token user pass kops-version=kops_version kubectl-version=kubectl_version pulumi-version=pulumi_version cluster-ops-ref="develop" app docker-image docker-namespace dockerfile project stack environment repository: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -448,14 +383,7 @@ deploy-frontend \
 [arg('repository', long), arg('ref', long), arg('user', long)]
 [arg('pass', long), arg('namespace', long), arg('image', long)]
 [arg('dockerfile', long)]
-build-publish-image \
-    repository \
-    ref \
-    user \
-    pass \
-    namespace \
-    image \
-    dockerfile: setup
+build-publish-image repository ref user pass namespace image dockerfile: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -482,12 +410,7 @@ build-publish-image \
 
 [arg('ref', long), arg('user', long), arg('pass', long)]
 [arg('namespace', long), arg('image', long)]
-build-publish-arangopg-image \
-    ref \
-    user \
-    pass \
-    namespace \
-    image: setup
+build-publish-arangopg-image ref user pass namespace image: setup
     #!/usr/bin/env bash
     set -euxo pipefail
 
@@ -508,10 +431,7 @@ build-publish-arangopg-image \
 #   --version       Version of the linter to use (required)
 
 [arg('repository', long), arg('ref', long), arg('version', long)]
-lint-repo \
-    repository \
-    ref \
-    version: setup
+lint-repo repository ref version: setup
     #!/usr/bin/env bash
     set -euxo pipefail
     {{dagger_bin}} call -m golang \
