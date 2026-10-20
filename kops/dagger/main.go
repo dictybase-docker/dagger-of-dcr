@@ -25,8 +25,11 @@ type Kops struct {
 
 // KopsContainer sets up a container with specified versions of kubectl and kops binaries from given URLs
 func (kmg *Kops) KopsContainer(ctx context.Context) *Container {
+	// dl.k8s.io is the supported release CDN. The legacy
+	// storage.googleapis.com/kubernetes-release bucket is frozen and 404s for
+	// anything past v1.31.0 (kubectl v1.32+ and later patches are absent).
 	kubectlBinary := fmt.Sprintf(
-		"https://storage.googleapis.com/kubernetes-release/release/v%s/bin/linux/%s/kubectl",
+		"https://dl.k8s.io/release/v%s/bin/linux/%s/kubectl",
 		kmg.Kubectl,
 		"amd64",
 	)
