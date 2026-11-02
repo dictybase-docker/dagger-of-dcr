@@ -46,7 +46,7 @@ check-env:
 #
 # This recipe installs the necessary binaries for GitHub Actions and Dagger.
 
-setup: install-gha-binary install-dagger-binary
+setup: install-gha-binary install-dagger-binary prepare-dagger-engine
 
 # Install GitHub Actions binary
 #
@@ -65,6 +65,68 @@ install-gha-binary:
 [group('setup-tools')]
 install-dagger-binary:
 	{{action_bin}} sd --dagger-version {{dagger_version}} --dagger-bin-dir {{bin_path}} --dagger-file {{dagger_file}}
+
+# Prepare and verify the Dagger engine container on Linux runners
+[group('setup-tools')]
+prepare-dagger-engine:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    if [ "$(uname -s)" != "Linux" ]; then
+        exit 0
+    fi
+    old_engines=$(docker ps -aq --filter "name=^/dagger-engine-" || true)
+    if [ -n "$old_engines" ]; then
+        docker rm -fv $old_engines || true
+    fi
+    sudo modprobe ip_tables iptable_nat iptable_filter iptable_mangle ip6_tables ip6table_nat ip6table_filter br_netfilter 2>/dev/null || true
+    sudo sysctl -w kernel.apparmor_restrict_unpriv_userns=0 2>/dev/null || true
+    engine_image="registry.dagger.io/engine:{{dagger_version}}"
+    docker pull "$engine_image"
+    repo_digest=$(docker inspect --format '{{ "{{" }}index .RepoDigests 0{{ "}}" }}' "$engine_image")
+    sha_hex="${repo_digest#*sha256:}"
+    engine_name="dagger-engine-${sha_hex:0:16}"
+    if ! grep -qx 'nat' /proc/net/ip_tables_names 2>/dev/null || ! grep -qx 'filter' /proc/net/ip_tables_names 2>/dev/null; then
+        docker build -t "$engine_image" - <<EOF
+    FROM ${engine_image}
+    RUN for b in iptables iptables-save iptables-restore ip6tables ip6tables-save ip6tables-restore; do \
+            ln -sf /sbin/xtables-nft-multi /usr/sbin/\$b && \
+            ln -sf /sbin/xtables-nft-multi /sbin/\$b; \
+        done
+    EOF
+    fi
+    docker run --name "$engine_name" -d --restart always -v /var/lib/dagger --privileged "$engine_image" --debug
+    ready=0
+    for _ in $(seq 1 20); do
+        if docker exec "$engine_name" buildctl debug workers >/dev/null 2>&1; then
+            ready=1
+            break
+        fi
+        sleep 1
+    done
+    if [ "$ready" -ne 1 ]; then
+        docker logs "$engine_name" || true
+        docker rm -fv "$engine_name" || true
+        docker build -t "$engine_image" - <<EOF
+    FROM ${engine_image}
+    RUN for b in iptables iptables-save iptables-restore ip6tables ip6tables-save ip6tables-restore; do \
+            ln -sf /sbin/xtables-nft-multi /usr/sbin/\$b && \
+            ln -sf /sbin/xtables-nft-multi /sbin/\$b; \
+        done
+    EOF
+        docker run --name "$engine_name" -d --restart always -v /var/lib/dagger --privileged "$engine_image" --debug
+        for _ in $(seq 1 20); do
+            if docker exec "$engine_name" buildctl debug workers >/dev/null 2>&1; then
+                ready=1
+                break
+            fi
+            sleep 1
+        done
+    fi
+    if [ "$ready" -ne 1 ]; then
+        docker ps -a --filter "name=^/dagger-engine-" || true
+        docker logs "$engine_name" || true
+        exit 1
+    fi
 
 # Export kubectl configuration
 #
