@@ -317,14 +317,14 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 	allDockerfiles := strings.Split(pload.Dockerfile, ":")
 	for idx, file := range allDockerfiles {
 		_, err := source.DockerBuild(dagger.DirectoryDockerBuildOpts{
-				Dockerfile: file,
-				BuildArgs: []dagger.BuildArg{
-					{
-						Name:  "BUILD_STATE",
-						Value: deployment.GetEnvironment(),
-					},
+			Dockerfile: file,
+			BuildArgs: []dagger.BuildArg{
+				{
+					Name:  "BUILD_STATE",
+					Value: deployment.GetEnvironment(),
 				},
-			}).
+			},
+		}).
 			WithRegistryAuth("docker.io", user, dag.SetSecret("docker-pass", password)).
 			Publish(ctx, fmt.Sprintf(
 				"%s/%s:%s",
