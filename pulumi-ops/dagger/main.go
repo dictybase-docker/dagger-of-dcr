@@ -21,6 +21,10 @@ const (
 	pulumiSet     = "set"
 )
 
+// pulumiExec runs args through the pulumi/pulumi image entrypoint ("pulumi"),
+// which Dagger no longer prepends to WithExec by default since v0.13.
+var pulumiExec = dagger.ContainerWithExecOpts{UseEntrypoint: true}
+
 type Payload struct {
 	Project         string `json:"project"`
 	Repository      string `json:"repository"`
@@ -111,7 +115,7 @@ func (pmo *PulumiOps) Login() *dagger.Container {
 			credFile,
 			dagger.ContainerWithEnvVariableOpts{},
 		).
-		WithExec([]string{"login", pmo.Backend})
+		WithExec([]string{"login", pmo.Backend}, pulumiExec)
 }
 
 // KubeAccess sets up Kubernetes access using the provided kubeconfig file.
@@ -158,6 +162,7 @@ func (pmo *PulumiOps) DeployApp(
 				fmt.Sprintf("%s.tag", app), tag,
 				pulumiPath,
 			},
+			pulumiExec,
 		).
 		WithExec(
 			[]string{
@@ -171,6 +176,7 @@ func (pmo *PulumiOps) DeployApp(
 				"-f",
 				"--non-interactive",
 			},
+			pulumiExec,
 		).
 		Stdout(ctx)
 }
@@ -203,6 +209,7 @@ func (pmo *PulumiOps) DeployAppThroughGithub(
 					), pload.DockerImageTag,
 					pulumiPath,
 				},
+				pulumiExec,
 			)
 		},
 	)
@@ -233,6 +240,7 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 					"properties.image.tag",
 					pload.DockerImageTag,
 				},
+				pulumiExec,
 			)
 		},
 	)
@@ -306,6 +314,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 			"-y",
 			"-f",
 		},
+		pulumiExec,
 	).Stdout(ctx)
 }
 
@@ -342,7 +351,7 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 					),
 				)
 			}
-			return container.WithExec(execCmd)
+			return container.WithExec(execCmd, pulumiExec)
 		},
 	)
 }
