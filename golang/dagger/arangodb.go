@@ -30,16 +30,16 @@ func (gom *Golang) TestsWithArangoDB(
 		)
 	}
 
-	return gom.PrepareTestContainer(ctx).
+	return gom.PrepareTestContainer().
 		WithServiceBinding("arango", arangoService).
 		WithEnvVariable("ARANGO_HOST", arangoHost).
 		WithEnvVariable("ARANGO_PASS", gom.ArangoPassword).
 		WithEnvVariable("ARANGO_USER", "root").
-		WithMountedDirectory(PROJ_MOUNT, src).
-		WithWorkdir(PROJ_MOUNT).
-		WithExec([]string{"go", "mod", "download"}).
+		WithMountedDirectory(projMount, src).
+		WithWorkdir(projMount).
+		WithExec([]string{"go", goModSubcommand, goModDownloadCommand}).
 		WithExec(append([]string{
-			"gotestsum", "--format", gom.GotestSumFormatter, "--",
+			goTestSumCommand, goTestSumFormatOption, gom.GotestSumFormatter, "--",
 		}, args...)).
 		Stdout(ctx)
 }

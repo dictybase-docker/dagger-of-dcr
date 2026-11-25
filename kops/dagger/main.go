@@ -7,7 +7,6 @@ name, state storage, and credentials.
 package main
 
 import (
-	"context"
 	"fmt"
 	"path/filepath"
 
@@ -26,7 +25,7 @@ type Kops struct {
 }
 
 // KopsContainer sets up a container with specified versions of kubectl and kops binaries from given URLs
-func (kmg *Kops) KopsContainer(ctx context.Context) *dagger.Container {
+func (kmg *Kops) KopsContainer() *dagger.Container {
 	// dl.k8s.io is the supported release CDN. The legacy
 	// storage.googleapis.com/kubernetes-release bucket is frozen and 404s for
 	// anything past v1.31.0 (kubectl v1.32+ and later patches are absent).
@@ -54,7 +53,7 @@ func (kmg *Kops) KopsContainer(ctx context.Context) *dagger.Container {
 }
 
 // ExportKubectl exports the kubeconfig file for the specified Kops cluster to a specified output path
-func (kmg *Kops) ExportKubectl(ctx context.Context) (*dagger.File, error) {
+func (kmg *Kops) ExportKubectl() (*dagger.File, error) {
 	credFile := "/opt/credentials.json"
 	outPath := "/work/out"
 	uuid.EnableRandPool()
@@ -75,7 +74,7 @@ func (kmg *Kops) ExportKubectl(ctx context.Context) (*dagger.File, error) {
 		outFile,
 		"--admin",
 	}
-	return kmg.KopsContainer(ctx).
+	return kmg.KopsContainer().
 		WithFile(credFile, kmg.Credentials, dagger.ContainerWithFileOpts{Permissions: 0o644}).
 		WithEnvVariable(
 			"GOOGLE_APPLICATION_CREDENTIALS",
@@ -86,7 +85,6 @@ func (kmg *Kops) ExportKubectl(ctx context.Context) (*dagger.File, error) {
 
 // WithCredentials sets the credentials file
 func (kmg *Kops) WithCredentials(
-	ctx context.Context,
 	// credentials file(google cloud for the time being), required
 	credentials *dagger.File,
 ) *Kops {
@@ -96,7 +94,6 @@ func (kmg *Kops) WithCredentials(
 
 // WithStateStorage sets the location of the state storage
 func (kmg *Kops) WithStateStorage(
-	ctx context.Context,
 	// location of state storeage, required
 	storage string,
 ) *Kops {
@@ -106,7 +103,6 @@ func (kmg *Kops) WithStateStorage(
 
 // WithCluster sets the cluster name
 func (kmg *Kops) WithCluster(
-	ctx context.Context,
 	// cluster name, required
 	name string,
 ) *Kops {
@@ -116,7 +112,6 @@ func (kmg *Kops) WithCluster(
 
 // WithKops sets the Kops version
 func (kmg *Kops) WithKops(
-	ctx context.Context,
 	// kops version
 	// + default="1.27.0"
 	version string,
@@ -127,7 +122,6 @@ func (kmg *Kops) WithKops(
 
 // WithKubectl sets the kubectl version
 func (kmg *Kops) WithKubectl(
-	ctx context.Context,
 	// kubectl version
 	// + default="1.24.11"
 	version string,

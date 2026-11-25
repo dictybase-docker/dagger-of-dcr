@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"dagger/golang/internal/dagger"
 
@@ -12,10 +11,14 @@ import (
 )
 
 const (
-	PROJ_MOUNT = "/app"
-	WOLFI_BASE = "cgr.dev/chainguard/wolfi-base"
-	LINT_BASE  = "golangci/golangci-lint"
-	githubURL  = "https://github.com"
+	projMount             = "/app"
+	lintBase              = "golangci/golangci-lint"
+	githubURL             = "https://github.com"
+	goModDownloadCommand  = "download"
+	goModSubcommand       = "mod"
+	goTestSumCommand      = "gotestsum"
+	goTestSumFormatOption = "--format"
+	apkCommand            = "apk"
 )
 
 type Golang struct {
@@ -38,14 +41,14 @@ func (gom *Golang) Test(
 	// +optional
 	args []string,
 ) (string, error) {
-	return gom.PrepareTestContainer(ctx).
-		WithMountedDirectory(PROJ_MOUNT, src).
-		WithWorkdir(PROJ_MOUNT).
-		WithExec([]string{"go", "mod", "download"}).
+	return gom.PrepareTestContainer().
+		WithMountedDirectory(projMount, src).
+		WithWorkdir(projMount).
+		WithExec([]string{"go", goModSubcommand, goModDownloadCommand}).
 		WithExec(append([]string{
-			"gotestsum",
+			goTestSumCommand,
 			"--format-hide-empty-pkg",
-			"--format", gom.GotestSumFormatter, "--",
+			goTestSumFormatOption, gom.GotestSumFormatter, "--",
 		}, args...)).
 		Stdout(ctx)
 }
@@ -67,18 +70,10 @@ func (gom *Golang) Lint(
 ) (string, error) {
 	return F.Pipe3(
 		dag.Container(),
-		base(fmt.Sprintf("%s:%s", LINT_BASE, version)),
-		prepareWorkspace(src, PROJ_MOUNT),
+		base(fmt.Sprintf("%s:%s", lintBase, version)),
+		prepareWorkspace(src, projMount),
 		goLintRunner(args),
 	).Stdout(ctx)
-}
-
-func fetchAndValidateEnvVars(envVar string) (string, error) {
-	value := os.Getenv(envVar)
-	if len(value) == 0 {
-		return "", fmt.Errorf("value of %s env variable is not set", envVar)
-	}
-	return value, nil
 }
 
 // WithGolangVersion sets the version of Golang to use.
@@ -104,12 +99,10 @@ func (gom *Golang) WithGotestSumFormatter(
 }
 
 // PrepareTestContainer creates a container with Golang and installs gotestsum and gotestdox
-func (gom *Golang) PrepareTestContainer(
-	ctx context.Context,
-) *dagger.Container {
+func (gom *Golang) PrepareTestContainer() *dagger.Container {
 	return dag.Container().
 		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
-		WithExec([]string{"apk", "add", "--no-cache", "git"}).
+		WithExec([]string{apkCommand, "add", "--no-cache", "git"}).
 		WithExec([]string{"go", "install", "gotest.tools/gotestsum@latest"}).
 		WithExec([]string{"go", "install", "github.com/bitfield/gotestdox/cmd/gotestdox@latest"})
 }

@@ -51,15 +51,15 @@ func (gom *Golang) TestsWithRedis(
 		)
 	}
 
-	return gom.PrepareTestContainer(ctx).
+	return gom.PrepareTestContainer().
 		WithServiceBinding("redis", redisService).
 		WithEnvVariable("REDIS_SERVICE_HOST", redisHost).
 		WithEnvVariable("REDIS_SERVICE_PORT", fmt.Sprintf("%d", gom.RedisPort)).
-		WithMountedDirectory(PROJ_MOUNT, src).
-		WithWorkdir(PROJ_MOUNT).
-		WithExec([]string{"go", "mod", "download"}).
+		WithMountedDirectory(projMount, src).
+		WithWorkdir(projMount).
+		WithExec([]string{"go", goModSubcommand, goModDownloadCommand}).
 		WithExec(append([]string{
-			"gotestsum", "--format", gom.GotestSumFormatter, "--",
+			goTestSumCommand, goTestSumFormatOption, gom.GotestSumFormatter, "--",
 		}, args...)).
 		Stdout(ctx)
 }
