@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"dagger/golang/internal/dagger"
 )
 
 // WithRedisVersion sets the version of Redis to use.
@@ -31,7 +33,7 @@ func (gom *Golang) WithRedisPort(
 func (gom *Golang) TestsWithRedis(
 	ctx context.Context,
 	// The source directory to test, Required.
-	src *Directory,
+	src *dagger.Directory,
 	// An optional slice of strings representing additional arguments to the go test command
 	// +optional
 	args []string,
@@ -49,15 +51,15 @@ func (gom *Golang) TestsWithRedis(
 		)
 	}
 
-	return gom.PrepareTestContainer(ctx).
+	return gom.PrepareTestContainer().
 		WithServiceBinding("redis", redisService).
 		WithEnvVariable("REDIS_SERVICE_HOST", redisHost).
 		WithEnvVariable("REDIS_SERVICE_PORT", fmt.Sprintf("%d", gom.RedisPort)).
-		WithMountedDirectory(PROJ_MOUNT, src).
-		WithWorkdir(PROJ_MOUNT).
-		WithExec([]string{"go", "mod", "download"}).
+		WithMountedDirectory(projMount, src).
+		WithWorkdir(projMount).
+		WithExec([]string{"go", goModSubcommand, goModDownloadCommand}).
 		WithExec(append([]string{
-			"gotestsum", "--format", gom.GotestSumFormatter, "--",
+			goTestSumCommand, goTestSumFormatOption, gom.GotestSumFormatter, "--",
 		}, args...)).
 		Stdout(ctx)
 }

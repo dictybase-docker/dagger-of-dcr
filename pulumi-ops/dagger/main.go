@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"dagger/pulumi-ops/internal/dagger"
+
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 )
@@ -14,7 +16,14 @@ import (
 const (
 	pulumiOpsRepo = "https://github.com/dictybase-docker/cluster-ops.git"
 	githubURL     = "https://github.com"
+	pulumiConfig  = "config"
+	pulumiPath    = "--path"
+	pulumiSet     = "set"
 )
+
+// pulumiExec runs args through the pulumi/pulumi image entrypoint ("pulumi"),
+// which Dagger no longer prepends to WithExec by default since v0.13.
+var pulumiExec = dagger.ContainerWithExecOpts{UseEntrypoint: true}
 
 type Payload struct {
 	Project         string `json:"project"`
@@ -38,15 +47,14 @@ type Payload struct {
 type PulumiOps struct {
 	Backend     string
 	Version     string
-	KubeConfig  *File
-	Credentials *File
+	KubeConfig  *dagger.File
+	Credentials *dagger.File
 	// Repository name
 	Repository string
 }
 
 // WithPulumi sets the Pulumi version for the PulumiOps instance.
 func (pmo *PulumiOps) WithPulumi(
-	ctx context.Context,
 	// pulumi version
 	// + default="3.108.0"
 	version string,
@@ -57,7 +65,6 @@ func (pmo *PulumiOps) WithPulumi(
 
 // WithBackend sets the backend for storing state for the PulumiOps instance.
 func (pmo *PulumiOps) WithBackend(
-	ctx context.Context,
 	// pulumi backend for storing state, required
 	backend string,
 ) *PulumiOps {
@@ -67,9 +74,8 @@ func (pmo *PulumiOps) WithBackend(
 
 // WithCredentials sets the credentials file for the PulumiOps instance.
 func (pmo *PulumiOps) WithCredentials(
-	ctx context.Context,
 	// credentials file(google cloud for the time being), required
-	credentials *File,
+	credentials *dagger.File,
 ) *PulumiOps {
 	pmo.Credentials = credentials
 	return pmo
@@ -77,9 +83,8 @@ func (pmo *PulumiOps) WithCredentials(
 
 // WithKubeConfig sets the Kubernetes configuration file for the PulumiOps instance.
 func (pmo *PulumiOps) WithKubeConfig(
-	ctx context.Context,
 	// kubernetes configuration file, required
-	config *File,
+	config *dagger.File,
 ) *PulumiOps {
 	pmo.KubeConfig = config
 	return pmo
@@ -87,7 +92,6 @@ func (pmo *PulumiOps) WithKubeConfig(
 
 // WithRepository sets the repository name
 func (pmo *PulumiOps) WithRepository(
-	ctx context.Context,
 	// Repository name, Required
 	repository string,
 ) *PulumiOps {
@@ -96,33 +100,33 @@ func (pmo *PulumiOps) WithRepository(
 }
 
 // PulumiContainer returns a container with the specified Pulumi version.
-func (pmo *PulumiOps) PulumiContainer(ctx context.Context) *Container {
+func (pmo *PulumiOps) PulumiContainer() *dagger.Container {
 	return dag.Container().
 		From(fmt.Sprintf("pulumi/pulumi:%s", pmo.Version))
 }
 
 // Login logs into the Pulumi backend using the provided credentials.
-func (pmo *PulumiOps) Login(ctx context.Context) *Container {
+func (pmo *PulumiOps) Login() *dagger.Container {
 	credFile := "/opt/credentials.json"
-	return pmo.PulumiContainer(ctx).
-		WithFile(credFile, pmo.Credentials, ContainerWithFileOpts{Permissions: 0644}).
+	return pmo.PulumiContainer().
+		WithFile(credFile, pmo.Credentials, dagger.ContainerWithFileOpts{Permissions: 0o644}).
 		WithEnvVariable(
 			"GOOGLE_APPLICATION_CREDENTIALS",
 			credFile,
-			ContainerWithEnvVariableOpts{},
+			dagger.ContainerWithEnvVariableOpts{},
 		).
-		WithExec([]string{"login", pmo.Backend})
+		WithExec([]string{"login", pmo.Backend}, pulumiExec)
 }
 
 // KubeAccess sets up Kubernetes access using the provided kubeconfig file.
-func (pmo *PulumiOps) KubeAccess(ctx context.Context) *Container {
+func (pmo *PulumiOps) KubeAccess() *dagger.Container {
 	kubeConfigFile := "/opt/kubernetes.yaml"
-	return pmo.Login(ctx).
-		WithFile(kubeConfigFile, pmo.KubeConfig, ContainerWithFileOpts{Permissions: 0644}).
+	return pmo.Login().
+		WithFile(kubeConfigFile, pmo.KubeConfig, dagger.ContainerWithFileOpts{Permissions: 0o644}).
 		WithEnvVariable(
 			"KUBECONFIG",
 			kubeConfigFile,
-			ContainerWithEnvVariableOpts{},
+			dagger.ContainerWithEnvVariableOpts{},
 		)
 }
 
@@ -147,17 +151,18 @@ func (pmo *PulumiOps) DeployApp(
 		WithRef(clusterOpsRef).
 		WithRepository(pulumiOpsRepo).
 		Checkout()
-	return pmo.KubeAccess(ctx).
+	return pmo.KubeAccess().
 		WithMountedDirectory("/mnt", opsDir).
 		WithWorkdir("/mnt").
 		WithExec(
 			[]string{
 				"-C", project,
 				"-s", stack,
-				"config", "set",
+				pulumiConfig, pulumiSet,
 				fmt.Sprintf("%s.tag", app), tag,
-				"--path",
+				pulumiPath,
 			},
+			pulumiExec,
 		).
 		WithExec(
 			[]string{
@@ -171,6 +176,7 @@ func (pmo *PulumiOps) DeployApp(
 				"-f",
 				"--non-interactive",
 			},
+			pulumiExec,
 		).
 		Stdout(ctx)
 }
@@ -191,18 +197,19 @@ func (pmo *PulumiOps) DeployAppThroughGithub(
 		deploymentID,
 		token,
 		clusterOpsRef,
-		func(container *Container, pload Payload) *Container {
+		func(container *dagger.Container, pload Payload) *dagger.Container {
 			return container.WithExec(
 				[]string{
 					"-C", pload.Project,
 					"-s", pload.Stack,
-					"config", "set",
+					pulumiConfig, pulumiSet,
 					fmt.Sprintf(
 						"%s.tag",
 						pload.Application,
 					), pload.DockerImageTag,
-					"--path",
+					pulumiPath,
 				},
+				pulumiExec,
 			)
 		},
 	)
@@ -224,15 +231,16 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 		deploymentID,
 		token,
 		clusterOpsRef,
-		func(container *Container, pload Payload) *Container {
+		func(container *dagger.Container, pload Payload) *dagger.Container {
 			return container.WithExec(
 				[]string{
 					"-C", pload.Project,
 					"-s", pload.Stack,
-					"config", "set", "--path",
+					pulumiConfig, pulumiSet, pulumiPath,
 					"properties.image.tag",
 					pload.DockerImageTag,
 				},
+				pulumiExec,
 			)
 		},
 	)
@@ -244,7 +252,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 	deploymentID string,
 	token string,
 	clusterOpsRef string,
-	setConfigFunc func(*Container, Payload) *Container,
+	setConfigFunc func(*dagger.Container, Payload) *dagger.Container,
 ) (string, error) {
 	var emptyStr string
 	owner, repo, err := parseOwnerRepo(pmo.Repository)
@@ -289,8 +297,8 @@ func (pmo *PulumiOps) deployThroughGithub(
 		WithRef(clusterOpsRef).
 		WithRepository(pulumiOpsRepo).
 		Checkout()
-	container := pmo.WithKubeConfig(ctx, pmo.KubeConfig).
-		KubeAccess(ctx).
+	container := pmo.WithKubeConfig(pmo.KubeConfig).
+		KubeAccess().
 		WithMountedDirectory("/mnt", opsDir).
 		WithWorkdir("/mnt")
 
@@ -306,6 +314,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 			"-y",
 			"-f",
 		},
+		pulumiExec,
 	).Stdout(ctx)
 }
 
@@ -325,11 +334,11 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 		deploymentID,
 		token,
 		clusterOpsRef,
-		func(container *Container, pload Payload) *Container {
+		func(container *dagger.Container, pload Payload) *dagger.Container {
 			execCmd := []string{
 				"-C", pload.Project,
 				"-s", pload.Stack,
-				"config", "set-all", "--path",
+				pulumiConfig, "set-all", pulumiPath,
 			}
 			for idx := range strings.Split(pload.Application, ":") {
 				execCmd = append(
@@ -342,7 +351,7 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 					),
 				)
 			}
-			return container.WithExec(execCmd)
+			return container.WithExec(execCmd, pulumiExec)
 		},
 	)
 }

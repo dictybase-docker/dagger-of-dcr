@@ -1,6 +1,9 @@
 {
   "name": "golang",
-  "sdk": "go",
+  "engineVersion": "v0.21.12",
+  "sdk": {
+    "source": "go"
+  },
   "dependencies": [
     {
       "name": "gitter",
@@ -8,5 +11,5 @@
     }
   ],
   "source": "dagger",
-  "engineVersion": "v0.11.9"
+  "disableDefaultFunctionCaching": true
 }

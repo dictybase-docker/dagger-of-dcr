@@ -5,6 +5,8 @@ package main
 import (
 	"context"
 	"errors"
+
+	"dagger/gitter/internal/dagger"
 )
 
 type Gitter struct {
@@ -42,7 +44,7 @@ func (gcmd *Gitter) WithRepository(
 
 // Checkout clones the repository and checks out the specific ref.
 // Uses Dagger's native git support — no container build required.
-func (gcmd *Gitter) Checkout(ctx context.Context) *Directory {
+func (gcmd *Gitter) Checkout() *dagger.Directory {
 	return dag.Git(gcmd.Repository).Ref(gcmd.Ref).Tree()
 }
 

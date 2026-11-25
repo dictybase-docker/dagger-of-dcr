@@ -1,4 +1,4 @@
-dagger_version := "v0.11.9"
+dagger_version := "v0.21.12"
 # Default tool versions. These fit the experiments cluster (Kubernetes 1.28.8).
 # Per-cluster versions are passed as named arguments; the registry in
 # cluster-ops is the source of truth (see README).

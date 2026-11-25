@@ -1,0 +1,72 @@
+name: Go checks
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go checks (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [container-image, gh-deployment, gitter, golang, kops, pulumi-ops]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ matrix.module }}/dagger/go.mod
+          cache-dependency-path: ${{ matrix.module }}/dagger/go.sum
+
+      - name: Read Dagger version
+        id: dagger-version
+        env:
+          MODULE: ${{ matrix.module }}
+        run: |
+          version=$(jq -er '.engineVersion | select(type == "string" and test("^v[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"))' "$MODULE/dagger.json")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Dagger
+        uses: dagger/dagger-for-github@v8.4.1
+        with:
+          version: ${{ steps.dagger-version.outputs.version }}
+
+      - name: Generate Dagger SDK
+        id: develop
+        env:
+          MODULE: ${{ matrix.module }}
+        run: dagger develop -m "$MODULE" --progress=plain
+
+      - name: Check generated manifests
+        run: git diff --exit-code
+
+      - name: Load Dagger module
+        env:
+          MODULE: ${{ matrix.module }}
+        run: dagger functions -m "$MODULE" --progress=plain
+
+      - name: Run Go tests
+        if: ${{ !cancelled() && steps.develop.outcome == 'success' }}
+        working-directory: ${{ matrix.module }}/dagger
+        run: go test ./...
+
+      - name: Run golangci-lint
+        if: ${{ !cancelled() && steps.develop.outcome == 'success' }}
+        uses: golangci/golangci-lint-action@v9.3.0
+        with:
+          version: v2.14.0
+          working-directory: ${{ matrix.module }}/dagger
+          args: --config=../../.golangci.yml --timeout=5m

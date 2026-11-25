@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"dagger/container-image/internal/dagger"
+
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 )
@@ -58,7 +60,6 @@ type Payload struct {
 
 // WithNamespace sets the docker namespace
 func (cmg *ContainerImage) WithNamespace(
-	ctx context.Context,
 	// The docker namespace under which the image will be pushed
 	// +default="dictybase"
 	namespace string,
@@ -69,7 +70,6 @@ func (cmg *ContainerImage) WithNamespace(
 
 // WithRef sets the Git reference (branch, tag, or SHA)
 func (cmg *ContainerImage) WithRef(
-	ctx context.Context,
 	// the branch, tag or sha to checkout
 	ref string,
 ) *ContainerImage {
@@ -79,7 +79,6 @@ func (cmg *ContainerImage) WithRef(
 
 // WithRepository sets the GitHub repository name
 func (cmg *ContainerImage) WithRepository(
-	ctx context.Context,
 	// github repository name with owner, for example tora/bora, Required
 	repository string,
 	// whether or not to prepend githubURL to the repository
@@ -97,7 +96,6 @@ func (cmg *ContainerImage) WithRepository(
 
 // WithDockerfile sets the Dockerfile path
 func (cmg *ContainerImage) WithDockerfile(
-	ctx context.Context,
 	// specifies the path to the Dockerfile
 	// +optional
 	// +default="build/package/Dockerfile"
@@ -109,7 +107,6 @@ func (cmg *ContainerImage) WithDockerfile(
 
 // WithImage sets the image name
 func (cmg *ContainerImage) WithImage(
-	ctx context.Context,
 	// name of the image to be built
 	image string,
 ) *ContainerImage {
@@ -161,9 +158,8 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 		password,
 		deploymentID,
 		token,
-		func(source *Directory, dpl *github.Deployment, pload Payload) *Container {
-			return dag.Container().
-				Build(source, ContainerBuildOpts{Dockerfile: pload.Dockerfile})
+		func(source *dagger.Directory, dpl *github.Deployment, pload Payload) *dagger.Container {
+			return source.DockerBuild(dagger.DirectoryDockerBuildOpts{Dockerfile: pload.Dockerfile})
 		},
 	)
 }
@@ -182,7 +178,7 @@ func (cmg *ContainerImage) FakePublishFromRepo(
 			"ttl.sh/%s-%s-%s:10m",
 			cmg.Namespace,
 			cmg.Image,
-			cmg.GenerateImageTag,
+			cmg.DockerImageTag,
 		),
 	)
 }
@@ -190,7 +186,7 @@ func (cmg *ContainerImage) FakePublishFromRepo(
 // ImageTag generates a Docker image tag based on the provided Git reference
 func (cmg *ContainerImage) GenerateImageTag(
 	ctx context.Context,
-) (*Container, error) {
+) (*dagger.Container, error) {
 	source := dag.Gitter().
 		WithRef(cmg.Ref).
 		WithRepository(cmg.Repository).
@@ -212,8 +208,7 @@ func (cmg *ContainerImage) GenerateImageTag(
 		genTag = dtag
 	}
 	cmg.DockerImageTag = genTag
-	return dag.Container().
-		Build(source, ContainerBuildOpts{Dockerfile: cmg.Dockerfile}), nil
+	return source.DockerBuild(dagger.DirectoryDockerBuildOpts{Dockerfile: cmg.Dockerfile}), nil
 }
 
 func (cmg *ContainerImage) generateDefaultTag(
@@ -316,16 +311,15 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 	allImages := strings.Split(pload.DockerImage, ":")
 	allDockerfiles := strings.Split(pload.Dockerfile, ":")
 	for idx, file := range allDockerfiles {
-		_, err := dag.Container().
-			Build(source, ContainerBuildOpts{
-				Dockerfile: file,
-				BuildArgs: []BuildArg{
-					{
-						Name:  "BUILD_STATE",
-						Value: deployment.GetEnvironment(),
-					},
+		_, err := source.DockerBuild(dagger.DirectoryDockerBuildOpts{
+			Dockerfile: file,
+			BuildArgs: []dagger.BuildArg{
+				{
+					Name:  "BUILD_STATE",
+					Value: deployment.GetEnvironment(),
 				},
-			}).
+			},
+		}).
 			WithRegistryAuth("docker.io", user, dag.SetSecret("docker-pass", password)).
 			Publish(ctx, fmt.Sprintf(
 				"%s/%s:%s",
@@ -350,7 +344,7 @@ func (cmg *ContainerImage) publishFromRepoWithDeploymentIDCommon(
 	password string,
 	deploymentID string,
 	token string,
-	buildFunc func(source *Directory, deployment *github.Deployment, pload Payload) *Container,
+	buildFunc func(source *dagger.Directory, deployment *github.Deployment, pload Payload) *dagger.Container,
 ) error {
 	owner, repo, err := parseOwnerRepo(cmg.Repository)
 	if err != nil {

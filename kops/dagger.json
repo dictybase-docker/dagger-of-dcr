@@ -1,6 +1,9 @@
 {
   "name": "kops",
-  "sdk": "go",
+  "engineVersion": "v0.21.12",
+  "sdk": {
+    "source": "go"
+  },
   "source": "dagger",
-  "engineVersion": "v0.11.9"
+  "disableDefaultFunctionCaching": true
 }
