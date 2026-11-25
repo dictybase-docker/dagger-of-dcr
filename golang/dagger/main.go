@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"dagger/golang/internal/dagger"
+
 	F "github.com/IBM/fp-go/function"
 )
 
@@ -31,7 +33,7 @@ type Golang struct {
 func (gom *Golang) Test(
 	ctx context.Context,
 	// The source directory to test, Required.
-	src *Directory,
+	src *dagger.Directory,
 	// An optional slice of strings representing additional arguments to the go test command
 	// +optional
 	args []string,
@@ -57,7 +59,7 @@ func (gom *Golang) Lint(
 	// +default="v1.55.2-alpine"
 	version string,
 	// The source directory to test, Required.
-	src *Directory,
+	src *dagger.Directory,
 	// An optional slice of strings representing additional arguments to the
 	// golangci-lint command
 	// +optional
@@ -104,7 +106,7 @@ func (gom *Golang) WithGotestSumFormatter(
 // PrepareTestContainer creates a container with Golang and installs gotestsum and gotestdox
 func (gom *Golang) PrepareTestContainer(
 	ctx context.Context,
-) *Container {
+) *dagger.Container {
 	return dag.Container().
 		From(fmt.Sprintf("golang:%s-alpine", gom.GolangVersion)).
 		WithExec([]string{"apk", "add", "--no-cache", "git"}).

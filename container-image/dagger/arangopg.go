@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"dagger/container-image/internal/dagger"
 )
 
 // CreateArangoPostgresContainer creates a container based on ArangoDB 3.10.14,
 // updates it, installs PostgreSQL 14, and restic on the linux/amd64 platform
 func (cmg *ContainerImage) CreateArangoPostgresContainer(
 	ctx context.Context,
-) (*Container, error) {
-	return dag.Container(ContainerOpts{Platform: "linux/amd64"}).
+) (*dagger.Container, error) {
+	return dag.Container(dagger.ContainerOpts{Platform: "linux/amd64"}).
 			From("arangodb:3.11.6").
 			WithExec([]string{"apk", "update"}).
 			WithExec([]string{"apk", "add", "postgresql14", "curl", "bzip2", "redis"}).

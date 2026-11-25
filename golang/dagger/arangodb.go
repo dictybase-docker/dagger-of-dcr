@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"dagger/golang/internal/dagger"
 )
 
 // TestsWithArangoDB runs Go tests in a container with an ArangoDB.
 func (gom *Golang) TestsWithArangoDB(
 	ctx context.Context,
 	// The source directory to test, Required.
-	src *Directory,
+	src *dagger.Directory,
 	// An optional slice of strings representing additional arguments to the go test command
 	// +optional
 	args []string,

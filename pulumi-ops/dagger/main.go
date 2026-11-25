@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"dagger/pulumi-ops/internal/dagger"
+
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 )
@@ -38,8 +40,8 @@ type Payload struct {
 type PulumiOps struct {
 	Backend     string
 	Version     string
-	KubeConfig  *File
-	Credentials *File
+	KubeConfig  *dagger.File
+	Credentials *dagger.File
 	// Repository name
 	Repository string
 }
@@ -69,7 +71,7 @@ func (pmo *PulumiOps) WithBackend(
 func (pmo *PulumiOps) WithCredentials(
 	ctx context.Context,
 	// credentials file(google cloud for the time being), required
-	credentials *File,
+	credentials *dagger.File,
 ) *PulumiOps {
 	pmo.Credentials = credentials
 	return pmo
@@ -79,7 +81,7 @@ func (pmo *PulumiOps) WithCredentials(
 func (pmo *PulumiOps) WithKubeConfig(
 	ctx context.Context,
 	// kubernetes configuration file, required
-	config *File,
+	config *dagger.File,
 ) *PulumiOps {
 	pmo.KubeConfig = config
 	return pmo
@@ -96,33 +98,33 @@ func (pmo *PulumiOps) WithRepository(
 }
 
 // PulumiContainer returns a container with the specified Pulumi version.
-func (pmo *PulumiOps) PulumiContainer(ctx context.Context) *Container {
+func (pmo *PulumiOps) PulumiContainer(ctx context.Context) *dagger.Container {
 	return dag.Container().
 		From(fmt.Sprintf("pulumi/pulumi:%s", pmo.Version))
 }
 
 // Login logs into the Pulumi backend using the provided credentials.
-func (pmo *PulumiOps) Login(ctx context.Context) *Container {
+func (pmo *PulumiOps) Login(ctx context.Context) *dagger.Container {
 	credFile := "/opt/credentials.json"
 	return pmo.PulumiContainer(ctx).
-		WithFile(credFile, pmo.Credentials, ContainerWithFileOpts{Permissions: 0644}).
+		WithFile(credFile, pmo.Credentials, dagger.ContainerWithFileOpts{Permissions: 0o644}).
 		WithEnvVariable(
 			"GOOGLE_APPLICATION_CREDENTIALS",
 			credFile,
-			ContainerWithEnvVariableOpts{},
+			dagger.ContainerWithEnvVariableOpts{},
 		).
 		WithExec([]string{"login", pmo.Backend})
 }
 
 // KubeAccess sets up Kubernetes access using the provided kubeconfig file.
-func (pmo *PulumiOps) KubeAccess(ctx context.Context) *Container {
+func (pmo *PulumiOps) KubeAccess(ctx context.Context) *dagger.Container {
 	kubeConfigFile := "/opt/kubernetes.yaml"
 	return pmo.Login(ctx).
-		WithFile(kubeConfigFile, pmo.KubeConfig, ContainerWithFileOpts{Permissions: 0644}).
+		WithFile(kubeConfigFile, pmo.KubeConfig, dagger.ContainerWithFileOpts{Permissions: 0o644}).
 		WithEnvVariable(
 			"KUBECONFIG",
 			kubeConfigFile,
-			ContainerWithEnvVariableOpts{},
+			dagger.ContainerWithEnvVariableOpts{},
 		)
 }
 
@@ -191,7 +193,7 @@ func (pmo *PulumiOps) DeployAppThroughGithub(
 		deploymentID,
 		token,
 		clusterOpsRef,
-		func(container *Container, pload Payload) *Container {
+		func(container *dagger.Container, pload Payload) *dagger.Container {
 			return container.WithExec(
 				[]string{
 					"-C", pload.Project,
@@ -224,7 +226,7 @@ func (pmo *PulumiOps) DeployBackendThroughGithub(
 		deploymentID,
 		token,
 		clusterOpsRef,
-		func(container *Container, pload Payload) *Container {
+		func(container *dagger.Container, pload Payload) *dagger.Container {
 			return container.WithExec(
 				[]string{
 					"-C", pload.Project,
@@ -244,7 +246,7 @@ func (pmo *PulumiOps) deployThroughGithub(
 	deploymentID string,
 	token string,
 	clusterOpsRef string,
-	setConfigFunc func(*Container, Payload) *Container,
+	setConfigFunc func(*dagger.Container, Payload) *dagger.Container,
 ) (string, error) {
 	var emptyStr string
 	owner, repo, err := parseOwnerRepo(pmo.Repository)
@@ -325,7 +327,7 @@ func (pmo *PulumiOps) DeployFrontendThroughGithub(
 		deploymentID,
 		token,
 		clusterOpsRef,
-		func(container *Container, pload Payload) *Container {
+		func(container *dagger.Container, pload Payload) *dagger.Container {
 			execCmd := []string{
 				"-C", pload.Project,
 				"-s", pload.Stack,

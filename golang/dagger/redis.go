@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"dagger/golang/internal/dagger"
 )
 
 // WithRedisVersion sets the version of Redis to use.
@@ -31,7 +33,7 @@ func (gom *Golang) WithRedisPort(
 func (gom *Golang) TestsWithRedis(
 	ctx context.Context,
 	// The source directory to test, Required.
-	src *Directory,
+	src *dagger.Directory,
 	// An optional slice of strings representing additional arguments to the go test command
 	// +optional
 	args []string,

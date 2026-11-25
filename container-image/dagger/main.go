@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"dagger/container-image/internal/dagger"
+
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 )
@@ -161,9 +163,8 @@ func (cmg *ContainerImage) PublishFromRepoWithDeploymentID(
 		password,
 		deploymentID,
 		token,
-		func(source *Directory, dpl *github.Deployment, pload Payload) *Container {
-			return dag.Container().
-				Build(source, ContainerBuildOpts{Dockerfile: pload.Dockerfile})
+		func(source *dagger.Directory, dpl *github.Deployment, pload Payload) *dagger.Container {
+			return source.DockerBuild(dagger.DirectoryDockerBuildOpts{Dockerfile: pload.Dockerfile})
 		},
 	)
 }
@@ -190,7 +191,7 @@ func (cmg *ContainerImage) FakePublishFromRepo(
 // ImageTag generates a Docker image tag based on the provided Git reference
 func (cmg *ContainerImage) GenerateImageTag(
 	ctx context.Context,
-) (*Container, error) {
+) (*dagger.Container, error) {
 	source := dag.Gitter().
 		WithRef(cmg.Ref).
 		WithRepository(cmg.Repository).
@@ -212,8 +213,7 @@ func (cmg *ContainerImage) GenerateImageTag(
 		genTag = dtag
 	}
 	cmg.DockerImageTag = genTag
-	return dag.Container().
-		Build(source, ContainerBuildOpts{Dockerfile: cmg.Dockerfile}), nil
+	return source.DockerBuild(dagger.DirectoryDockerBuildOpts{Dockerfile: cmg.Dockerfile}), nil
 }
 
 func (cmg *ContainerImage) generateDefaultTag(
@@ -316,10 +316,9 @@ func (cmg *ContainerImage) PublishFrontendFromRepoWithDeploymentID(
 	allImages := strings.Split(pload.DockerImage, ":")
 	allDockerfiles := strings.Split(pload.Dockerfile, ":")
 	for idx, file := range allDockerfiles {
-		_, err := dag.Container().
-			Build(source, ContainerBuildOpts{
+		_, err := source.DockerBuild(dagger.DirectoryDockerBuildOpts{
 				Dockerfile: file,
-				BuildArgs: []BuildArg{
+				BuildArgs: []dagger.BuildArg{
 					{
 						Name:  "BUILD_STATE",
 						Value: deployment.GetEnvironment(),
@@ -350,7 +349,7 @@ func (cmg *ContainerImage) publishFromRepoWithDeploymentIDCommon(
 	password string,
 	deploymentID string,
 	token string,
-	buildFunc func(source *Directory, deployment *github.Deployment, pload Payload) *Container,
+	buildFunc func(source *dagger.Directory, deployment *github.Deployment, pload Payload) *dagger.Container,
 ) error {
 	owner, repo, err := parseOwnerRepo(cmg.Repository)
 	if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dagger/golang/internal/dagger"
 	F "github.com/IBM/fp-go/function"
 )
 
@@ -16,50 +17,47 @@ var (
 	)
 )
 
-func unCurriedBase(base string, ctr *Container) *Container {
+func unCurriedBase(base string, ctr *dagger.Container) *dagger.Container {
 	return ctr.From(base)
-
 }
 
-func unCurriedwolfiWithGoInstall(version string, ctr *Container) *Container {
+func unCurriedwolfiWithGoInstall(version string, ctr *dagger.Container) *dagger.Container {
 	return ctr.WithExec([]string{"apk", "update"}).
 		WithExec([]string{"apk", "add", version})
 }
 
-func uncurriedGoTestRunner(cmd []string, ctr *Container) *Container {
+func uncurriedGoTestRunner(cmd []string, ctr *dagger.Container) *dagger.Container {
 	return ctr.WithExec(append([]string{"go", "test", "./..."}, cmd...))
 }
 
-func uncurriedGoLintRunner(cmd []string, ctr *Container) *Container {
+func uncurriedGoLintRunner(cmd []string, ctr *dagger.Container) *dagger.Container {
 	return ctr.WithExec(
 		append([]string{"golangci-lint", "run", "-c", ".golangci.yml"}, cmd...),
 	)
 }
 
-func modCache(ctr *Container) *Container {
+func modCache(ctr *dagger.Container) *dagger.Container {
 	return ctr.WithExec([]string{"go", "mod", "download"})
-
 }
 
 func uncurriedPrepareWorkspace(
-	src *Directory,
+	src *dagger.Directory,
 	mount string,
-	ctr *Container,
-) *Container {
+	ctr *dagger.Container,
+) *dagger.Container {
 	return ctr.WithMountedDirectory(mount, src).
 		WithWorkdir(mount)
 }
 
 func uncurriedRegistryAuth(
 	address, user string,
-	pass *Secret,
-	ctr *Container,
-) *Container {
+	pass *dagger.Secret,
+	ctr *dagger.Container,
+) *dagger.Container {
 	return ctr.WithRegistryAuth(address, user, pass)
 }
 
-func uncurriedSetupBuild(src, dockerFile string, ctr *Container) *Container {
+func uncurriedSetupBuild(src, dockerFile string, ctr *dagger.Container) *dagger.Container {
 	return ctr.Directory(src).
-		DockerBuild(DirectoryDockerBuildOpts{Dockerfile: dockerFile})
+		DockerBuild(dagger.DirectoryDockerBuildOpts{Dockerfile: dockerFile})
 }
-
